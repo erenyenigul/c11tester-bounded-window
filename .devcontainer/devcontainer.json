@@ -2,11 +2,13 @@
   "name": "c11tester-bounded-window",
   "build": {
     "dockerfile": "../Dockerfile",
-    "context": ".."
+    "context": "..",
+    "options": ["--platform=linux/amd64"]
   },
   "remoteUser": "c11tester",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "runArgs": [
+    "--platform=linux/amd64",
     "--cap-add=SYS_PTRACE",
     "--security-opt=seccomp=unconfined"
   ],

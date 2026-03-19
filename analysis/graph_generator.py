@@ -207,7 +207,13 @@ def main():
         sys.exit(1)
         
     path = sys.argv[1]
-    output_dir = "analysis/graphs"
+    parts = os.path.normpath(path).split(os.sep)
+
+    if len(parts) < 2:
+        print("Longer path expected.")
+        sys.exit(1)
+
+    output_dir = os.path.join("analysis/graphs", os.path.join(parts[-2], parts[-1]))
     os.makedirs(output_dir, exist_ok=True)
     
     if os.path.isdir(path):

@@ -1,0 +1,7 @@
+{
+  "execution_id": 1,
+  "events": [
+    { "event_id": 1, "thread": 1, "action": "atomic write", "memory_order": "seq_cst", "location": "0x100", "value": "1", "rf": null, "cv": "(1)" },
+    { "event_id": 2, "thread": 1, "action": "atomic write", "memory_order": "seq_cst", "location": "0x200", "value": "2", "rf": null, "cv": "(2)" }
+  ]
+}

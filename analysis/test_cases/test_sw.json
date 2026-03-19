@@ -1,0 +1,7 @@
+{
+  "execution_id": 1,
+  "events": [
+    { "event_id": 1, "thread": 1, "action": "atomic write", "memory_order": "release", "location": "0x100", "value": "1", "rf": null, "cv": "(1)" },
+    { "event_id": 2, "thread": 2, "action": "atomic read", "memory_order": "acquire", "location": "0x100", "value": "1", "rf": 1, "cv": "(2)" }
+  ]
+}

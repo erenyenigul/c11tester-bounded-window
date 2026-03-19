@@ -1,3 +1,0 @@
-#/bin/bash
-
-/usr/local/bin/clang -Xclang -load -Xclang /scratch/llvm-project/build/lib/libCDSPass.so -L/scratch/fuzzer/random-fuzzer -lmodel -Wno-unused-command-line-argument $@

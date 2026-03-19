@@ -147,6 +147,7 @@ def visualize_graph(events, po, sw, hb, output_png):
         print(f"Error running dot for {output_png}: {e}")
 
 
+# main function to process a json file and generate graph data and visualization
 def process_file(json_path, output_dir):
     data = load_json(json_path)
     events = data['events']

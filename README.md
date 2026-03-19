@@ -83,11 +83,13 @@ python3 analysis/graph_generator.py analysis/parsed/fences2/
 ### Visualization
 The script automatically generates visualizations in the `analysis/graphs/` folder:
 *   **JSON Graph:** (`*_graph.json`) Contains the 4 fields per node (id, rf, po, hb).
-*   **PNG Image:** (`*_graph.png`) A visual representation of the graph.
+*   **Execution Graph Image:** (`*_execution_graph.png`) A visual representation of the standard execution graph.
     *   **Black edges:** Program Order (`po`)
     *   **Red edges:** Synchronized-With (`sw`)
     *   **Green dashed edges:** Reads-From (`rf`)
-    *   *Note: Happens-Before (`hb`) edges are not shown directly in the visualization to avoid clutter, as they are implicitly represented by the `po` and `sw` edges.*
+*   **HB Graph Image:** (`*_hb_graph.png`) A visual representation of the Happens-Before relations.
+    *   **Blue edges:** Happens-Before (`hb`)
+    *   *Note: HB edges are shown in a separate graph to avoid cluttering the execution graph.*
 
 ---
 

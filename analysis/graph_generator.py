@@ -119,8 +119,8 @@ def create_graph_data(events, po, hb):
         }
     return graph
 
-# visualize the graph using dot, save the dot file and png file
-def visualize_graph(events, po, sw, hb, output_png):
+# visualize the execution graph using dot, save the dot file and png file
+def visualize_execution_graph(events, po, sw, hb, output_png):
     dot_content = "digraph G {\n"
     dot_content += "  rankdir=LR;\n"
     dot_content += "  node [shape=box];\n"
@@ -148,7 +148,32 @@ def visualize_graph(events, po, sw, hb, output_png):
     
     try:
         subprocess.run(["dot", "-Tpng", dot_file, "-o", output_png], check=True)
-        print(f"Graph saved to {output_png}")
+        print(f"Execution graph saved to {output_png}")
+    except Exception as e:
+        print(f"Error running dot for {output_png}: {e}")
+
+# visualize the happens-before graph using dot
+def visualize_hb_graph(events, hb, output_png):
+    dot_content = "digraph G {\n"
+    dot_content += "  rankdir=LR;\n"
+    dot_content += "  node [shape=box];\n"
+    
+    for e in events:
+        label = f"ID: {e['event_id']}\\nT{e['thread']}\\n{e['action']}"
+        dot_content += f'  {e["event_id"]} [label="{label}"];\n'
+    
+    for u, v in hb:
+        dot_content += f'  {u} -> {v} [label="hb", color="blue"];\n'
+
+    dot_content += "}\n"
+    
+    dot_file = output_png.replace(".png", ".dot")
+    with open(dot_file, "w") as f:
+        f.write(dot_content)
+    
+    try:
+        subprocess.run(["dot", "-Tpng", dot_file, "-o", output_png], check=True)
+        print(f"HB graph saved to {output_png}")
     except Exception as e:
         print(f"Error running dot for {output_png}: {e}")
 
@@ -169,8 +194,11 @@ def process_file(json_path, output_dir):
     with open(json_out, "w") as f:
         json.dump(graph, f, indent=2)
     
-    png_out = os.path.join(output_dir, f"{base_name}_graph.png")
-    visualize_graph(events, po, sw, hb, png_out)
+    exec_png_out = os.path.join(output_dir, f"{base_name}_execution_graph.png")
+    visualize_execution_graph(events, po, sw, hb, exec_png_out)
+
+    hb_png_out = os.path.join(output_dir, f"{base_name}_hb_graph.png")
+    visualize_hb_graph(events, hb, hb_png_out)
 
 
 def main():

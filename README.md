@@ -57,12 +57,10 @@ The graph is constructed through the following five steps:
 2.  **Compute `po` (Program Order):**
     *   Connects events within the same thread.
     *   For each thread, edges are created between an event and its immediate successor (based on `event_id`).
-3.  **Compute `sw` (Synchronizes-With):**
-    *   Identifies pairs of events at the same memory location.
-    *   Ensures memory orders are **not** `relaxed`.
-    *   Requires at least one event to be a **store** action.
-    *   Connects the store to the other action.
-    *   Also includes thread-level synchronization (thread create $\to$ thread start and thread finish $\to$ thread join).
+3.  **Compute `sw` (Synchronized-With):**
+    *   **Phase 1: Valid `rf` edges:** For each load that reads from a store, an `sw` edge is added between the store and the load.
+    *   **Phase 2: Thread synchronization:** Connects thread lifecycle events (`thread create` $\to$ `thread start` and `thread finish` $\to$ `thread join`).
+    *   **Phase 3: Fences:** Connects a store $e_i$ to a load $e_j$ through a fence $e_f$ if $e_i \xrightarrow{po} e_f$ and $e_i \xrightarrow{rf} e_j$.
 4.  **Compute `hb` (Happens-Before):**
     *   Computes the **transitive closure** of the set of edges ($po \cup sw$).
     *   If $A \to B$ and $B \to C$, then $A \to C$ is added as an `hb` edge.
@@ -87,8 +85,9 @@ The script automatically generates visualizations in the `analysis/graphs/` fold
 *   **JSON Graph:** (`*_graph.json`) Contains the 4 fields per node (id, rf, po, hb).
 *   **PNG Image:** (`*_graph.png`) A visual representation of the graph.
     *   **Black edges:** Program Order (`po`)
-    *   **Red edges:** Synchronizes-With (`sw`)
+    *   **Red edges:** Synchronized-With (`sw`)
     *   **Green dashed edges:** Reads-From (`rf`)
+    *   *Note: Happens-Before (`hb`) edges are not shown directly in the visualization to avoid clutter, as they are implicitly represented by the `po` and `sw` edges.*
 
 ---
 

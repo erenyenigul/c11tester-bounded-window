@@ -30,37 +30,43 @@ def is_load(action):
     a = action.lower()
     return 'read' in a or 'load' in a or 'rmw' in a
 
-def compute_sw(events):
+def compute_sw(events, po):
     sw = []
-    # logic for computing sw edges:
-    # 1. same location? yes then check mo
-    # 2. mo should NOT be relaxed
-    # 3. at least one is store
-    # 4. connect store and the other one
+    event_by_id = {e['event_id']: e for e in events}
     
-    for i in range(len(events)):
-        for j in range(len(events)):
-            if i == j: continue
-            e1 = events[i]
-            e2 = events[j]
-            
-            # atomic/normal synchronization
-            if e1['location'] == e2['location'] and e1['location'] != "0xdeadbeef":
-                if e1['memory_order'] != 'relaxed' and e2['memory_order'] != 'relaxed':
-                    if is_store(e1['action']):
-                        sw.append((e1['event_id'], e2['event_id']))
-                    elif is_store(e2['action']):
-                        sw.append((e2['event_id'], e1['event_id']))
-            
-            # thread creation and start
+    # phase 1: get subset of valid rf edges
+    for ei in events:
+        if ei.get('rf') is not None:
+            ej_id = ei['rf']
+            ej = event_by_id.get(ej_id)
+            if ej and is_store(ej['action']) and is_load(ei['action']):
+                sw.append((ej['event_id'], ei['event_id']))
+    
+    # phase 2: thread synchronization
+    for e1 in events:
+        for e2 in events:
+            # thread create -> thread start
             if e1['action'] == "thread create" and e2['action'] == "thread start":
                 if e1['location'] == e2['location'] or e1['value'] == e2['value']:
                     sw.append((e1['event_id'], e2['event_id']))
-            
+            # thread finish -> thread join
             if e1['action'] == "thread finish" and e2['action'] == "thread join":
                 if e1['location'] == e2['location']:
                     sw.append((e1['event_id'], e2['event_id']))
                     
+    # phase 3: fences
+    for ef in events:
+        if "fence" in ef['action'].lower():
+            for ei_id, ef_id in po:
+                if ef_id == ef['event_id']:
+                    ei = event_by_id.get(ei_id)
+                    if ei:
+                        # e_i ->rf e_j means e_j reads from e_i
+                        for ej in events:
+                            if ej.get('rf') == ei['event_id']:
+                                if ei['location'] == ej['location']:
+                                    sw.append((ef['event_id'], ej['event_id']))
+                                    
     return list(set(sw))
 
 
@@ -155,7 +161,7 @@ def process_file(json_path, output_dir):
     
     print(f"Processing {base_name}...")
     po = compute_po(events)
-    sw = compute_sw(events)
+    sw = compute_sw(events, po)
     hb = compute_hb(events, po, sw)
     graph = create_graph_data(events, po, hb)
     

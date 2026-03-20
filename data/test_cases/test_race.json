@@ -1,0 +1,7 @@
+{
+  "execution_id": 1,
+  "events": [
+    { "event_id": 1, "thread": 1, "action": "write", "memory_order": "na", "location": "0x50", "value": "10", "rf": null },
+    { "event_id": 2, "thread": 2, "action": "write", "memory_order": "na", "location": "0x50", "value": "20", "rf": null }
+  ]
+}

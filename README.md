@@ -26,20 +26,20 @@ The parser processes the raw text output of C11Tester and produces structured JS
     where `<test_suite>` is either `c11tester` or `bounded`.
     This compiles the target programs, runs them 100 times each with `-verbose=2` and generates the JSON files.
 
-### Pruning Test Cases (`bounded`)
+### Bounded Window Pruning Test Cases (`bounded`)
 
-The `analysis/test_cases/programs/` directory contains a suite of C11 atomic programs designed to stress bounded-window pruning logic:
+The `analysis/test_cases/programs/` directory contains long-running concurrent programs designed to stress pruning correctness and memory pressure behavior:
 
-- `prune01_two_loads_same_loc.c`: Two competing stores and two reads from same location; coherence-sensitive read sequence.
-- `prune02_old_store_pinned_by_reader.c`: Old store followed by newer store while a reader can still observe old/new values.
-- `prune03_rmw_chain.c`: RMW edges on same location plus observer.
-- `prune04_release_acquire_fence.c`: Release/acquire fence synchronization and fence-pruning behavior.
-- `prune05_sc_fence_order.c`: Sequentially consistent fences across two threads.
-- `prune06_unsynced_stale_reader.c`: Unsynchronized reader continuously loading while writer advances values.
-- `prune07_cross_location_noise.c`: Heavy activity on unrelated location to test per-location pruning isolation.
-- `prune08_reader_then_writer_same_loc.c`: Thread reads then writes same location while another thread writes competing values.
-- `prune09_release_seq_chain.c`: Release sequence via CAS chain with third-thread acquire read.
-- `prune10_long_trace_window.c`: Longer mixed trace to trigger aggressive window pressure.
+- `prune01_multiple_stores_same_loc.c`: Many stores to one location with concurrent readers; checks safe pruning of older mo-ordered stores.
+- `prune02_mod_order_chain.c`: Multi-thread store chain to the same location; stresses modification-order constraints during pruning.
+- `prune03_multi_location_fences.c`: Multi-location traffic with release/acquire fences; exercises fence-aware pruning.
+- `prune04_rmw_chain.c`: Heavy RMW sequence on one location; stresses pruning under dense RMW and mo edges.
+- `prune05_stale_reader_long_window.c`: Long-running stale-reader pattern while writer advances; stresses window pressure handling.
+- `prune06_release_seq_long_chain.c`: Extended release-sequence style updates via RMW; checks release-sequence-sensitive pruning.
+- `prune07_sc_fence_long_trace.c`: Repeated seq_cst stores/fences across threads; stresses SC-fence-related retention and pruning.
+- `prune08_aggressive_window.c`: Unsynchronized reader plus heavy writer activity; targets aggressive window mode behavior.
+- `prune09_cross_location_heavy.c`: High traffic on multiple unrelated locations; validates per-location pruning isolation.
+- `prune10_long_mixed_trace.c`: Mixed long trace combining atomic and non-atomic interactions; broad end-to-end pruning stress case.
 
 ### Parsed Output
 Each JSON file contains the following structure:

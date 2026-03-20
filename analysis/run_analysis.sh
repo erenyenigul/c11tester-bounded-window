@@ -31,7 +31,7 @@ for file in "$TEST_DIR"/*.c "$TEST_DIR"/*.cc; do
     name="${filename%.*}"
     output="$OBJ_DIR/$name"
 
-    clang -std=c11 -I/home/c11tester/c11tester/include -o "$output" "$file" || {
+    clang -I/home/c11tester/c11tester/include -o "$output" "$file" || {
         echo "Compilation failed for $filename, skipping..."
         continue
     }

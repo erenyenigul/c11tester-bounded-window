@@ -18,11 +18,28 @@ The parser processes the raw text output of C11Tester and produces structured JS
     ```shell
     docker run -it -v $(pwd):/analysis pcp:latest
     ```
-    When inside the image, simply run the script: 
+    Select which test suite to run: `c11tester` for the built-in tests, or `bounded` for custom bounded window tests. Then run:
     ```shell
-    /analysis/run_analysis.sh
+    /analysis/run_analysis.sh <test_suite>
     ```
-    *This compiles the target programs, runs them 100 times each with `-verbose=2` and generates the JSON files.*
+    
+    where `<test_suite>` is either `c11tester` or `bounded`.
+    This compiles the target programs, runs them 100 times each with `-verbose=2` and generates the JSON files.
+
+### Pruning Test Cases (`bounded`)
+
+The `analysis/test_cases/programs/` directory contains a suite of C11 atomic programs designed to stress bounded-window pruning logic:
+
+- `prune01_two_loads_same_loc.c`: Two competing stores and two reads from same location; coherence-sensitive read sequence.
+- `prune02_old_store_pinned_by_reader.c`: Old store followed by newer store while a reader can still observe old/new values.
+- `prune03_rmw_chain.c`: RMW edges on same location plus observer.
+- `prune04_release_acquire_fence.c`: Release/acquire fence synchronization and fence-pruning behavior.
+- `prune05_sc_fence_order.c`: Sequentially consistent fences across two threads.
+- `prune06_unsynced_stale_reader.c`: Unsynchronized reader continuously loading while writer advances values.
+- `prune07_cross_location_noise.c`: Heavy activity on unrelated location to test per-location pruning isolation.
+- `prune08_reader_then_writer_same_loc.c`: Thread reads then writes same location while another thread writes competing values.
+- `prune09_release_seq_chain.c`: Release sequence via CAS chain with third-thread acquire read.
+- `prune10_long_trace_window.c`: Longer mixed trace to trigger aggressive window pressure.
 
 ### Parsed Output
 Each JSON file contains the following structure:
@@ -43,8 +60,6 @@ Each JSON file contains the following structure:
   ]
 }
 ```
-
-
 
 ## 2. Execution Graph Generation
 

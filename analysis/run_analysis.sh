@@ -1,6 +1,19 @@
 #!/bin/bash
 
-TEST_DIR=~/c11tester-tests/test
+TEST_PRESET_OR_PATH="${1:-c11}"
+
+case "$TEST_PRESET_OR_PATH" in
+    c11tester)
+        TEST_DIR="$HOME/c11tester-tests/test"
+        ;;
+    bounded)
+        TEST_DIR="/analysis/test_cases/programs"
+        ;;
+    *)
+        TEST_DIR="$TEST_PRESET_OR_PATH"
+        ;;
+esac
+
 OBJ_DIR=~/objects
 ANALYSIS_DIR=/analysis/parsed
 
@@ -18,7 +31,7 @@ for file in "$TEST_DIR"/*.c "$TEST_DIR"/*.cc; do
     name="${filename%.*}"
     output="$OBJ_DIR/$name"
 
-    clang -I/home/c11tester/c11tester/include -o "$output" "$file" || {
+    clang -std=c11 -I/home/c11tester/c11tester/include -o "$output" "$file" || {
         echo "Compilation failed for $filename, skipping..."
         continue
     }

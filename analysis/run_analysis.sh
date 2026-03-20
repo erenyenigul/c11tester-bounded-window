@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TEST_PRESET_OR_PATH="${1:-c11}"
+TEST_PRESET_OR_PATH="${1:-c11tester}"
 
 case "$TEST_PRESET_OR_PATH" in
     c11tester)

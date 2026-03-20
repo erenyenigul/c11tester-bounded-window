@@ -1,6 +1,19 @@
 #!/bin/bash
 
-TEST_DIR=~/c11tester-tests/test
+TEST_PRESET_OR_PATH="${1:-c11tester}"
+
+case "$TEST_PRESET_OR_PATH" in
+    c11tester)
+        TEST_DIR="$HOME/c11tester-tests/test"
+        ;;
+    bounded)
+        TEST_DIR="/analysis/test_cases/programs"
+        ;;
+    *)
+        TEST_DIR="$TEST_PRESET_OR_PATH"
+        ;;
+esac
+
 OBJ_DIR=~/objects
 ANALYSIS_DIR=/analysis/parsed
 

@@ -18,11 +18,28 @@ The parser processes the raw text output of C11Tester and produces structured JS
     ```shell
     docker run -it -v $(pwd):/analysis pcp:latest
     ```
-    When inside the image, simply run the script: 
+    Select which test suite to run: `c11tester` for the built-in tests, or `bounded` for custom bounded window tests. Then run:
     ```shell
-    /analysis/run_analysis.sh
+    /analysis/run_analysis.sh <test_suite>
     ```
-    *This compiles the target programs, runs them 100 times each with `-verbose=2` and generates the JSON files.*
+    
+    where `<test_suite>` is either `c11tester` or `bounded`.
+    This compiles the target programs, runs them 100 times each with `-verbose=2` and generates the JSON files.
+
+### Bounded Window Pruning Test Cases (`bounded`)
+
+The `analysis/test_cases/programs/` directory contains long-running concurrent programs designed to stress pruning correctness and memory pressure behavior:
+
+- `prune01_multiple_stores_same_loc.c`: Many stores to one location with concurrent readers; checks safe pruning of older mo-ordered stores.
+- `prune02_mod_order_chain.c`: Multi-thread store chain to the same location; stresses modification-order constraints during pruning.
+- `prune03_multi_location_fences.c`: Multi-location traffic with release/acquire fences; exercises fence-aware pruning.
+- `prune04_rmw_chain.c`: Heavy RMW sequence on one location; stresses pruning under dense RMW and mo edges.
+- `prune05_stale_reader_long_window.c`: Long-running stale-reader pattern while writer advances; stresses window pressure handling.
+- `prune06_release_seq_long_chain.c`: Extended release-sequence style updates via RMW; checks release-sequence-sensitive pruning.
+- `prune07_sc_fence_long_trace.c`: Repeated seq_cst stores/fences across threads; stresses SC-fence-related retention and pruning.
+- `prune08_aggressive_window.c`: Unsynchronized reader plus heavy writer activity; targets aggressive window mode behavior.
+- `prune09_cross_location_heavy.c`: High traffic on multiple unrelated locations; validates per-location pruning isolation.
+- `prune10_long_mixed_trace.c`: Mixed long trace combining atomic and non-atomic interactions; broad end-to-end pruning stress case.
 
 ### Parsed Output
 Each JSON file contains the following structure:
@@ -43,8 +60,6 @@ Each JSON file contains the following structure:
   ]
 }
 ```
-
-
 
 ## 2. Execution Graph Generation
 

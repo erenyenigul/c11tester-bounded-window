@@ -1,2 +1,4 @@
-analysis/parsed/
-analysis/graphs/
+data/parsed/
+data/graphs/
+*/__pycache__/
+*.pyc

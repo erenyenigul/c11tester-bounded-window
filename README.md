@@ -1,104 +1,104 @@
 # C11Tester Bounded Window Analysis
 
-This project implements the Bounded Window algorithm for C11 execution traces. It consists of the following phases:
+This project implements the **Bounded Window** algorithm from the C11Tester paper (*Section 6.1: Pruning the Execution Graph*).
 
-*(TODO: fill in every time we implement a new step)*
-1.  **Parsing:** Converting C11Tester's verbose output into structured JSON files.
-2.  **Execution Graph Generation:** Computing memory model relations (PO, SW, HB) and visualizing the execution graph.
+### What is the Bounded Window Algorithm?
+In concurrent program analysis, we track an "Execution Graph" of memory accesses (loads, stores, fences). For long-running programs, this graph grows indefinitely, eventually exhausting system memory. The Bounded Window algorithm is a technique to **safely prune** (delete) old parts of the execution trace that are no longer needed for future analysis.
+
+### Why is it important?
+1.  **Memory Efficiency:** Without pruning, race detectors cannot analyze long executions.
+2.  **Soundness:** You cannot simply delete old events. In the C11 memory model, an "older" store might be modification-ordered *after* a "newer" store. Naive pruning would lead to invalid executions or false race reports.
+3.  **Safety:** The algorithm uses **Priorsets** and **Clock Vector Intersection (`CVmin`)** to prove which stores can no longer be "read-from" by any thread.
+
+### Project Structure
+*   `algorithm/`: Core logic and C11 memory model data structures.
+*   `tools/`: Command-line tools for parsing, graph generation, and race detection.
+*   `data/`: Test cases, parsed JSON traces, and generated graphs.
 
 ---
 
-## 1. Trace Parsing
+## Glossary & Abbreviations
 
-The parser processes the raw text output of C11Tester and produces structured JSON files for each execution.
+| Abbreviation | Meaning | Description |
+| :--- | :--- | :--- |
+| **mo** | Modification Order | The "timeline" of values for a single memory address. |
+| **rf** | Reads-From | A relationship where a Load reads a value written by a specific Store. |
+| **rmw** | Read-Modify-Write | An atomic operation that does both (like `fetch_add`). |
+| **L** | Load | The current Load operation being analyzed. |
+| **S** | Store | The current Store operation being analyzed. |
+| **F** | Fence | A synchronization barrier. |
+| **FL** | Fence of Load L | The last SC fence in the thread performing Load L. |
+| **FS** | Fence of Store S | The last SC fence in the thread performing Store S. |
+| **Ft** | Fence of thread t | The last SC fence in some other thread t. |
+| **pset** | Priorset | The set of "old" operations that we are adding $hb$ edges to. |
+| **a** | Address | The memory location (e.g., `0x50`). |
+| **v** | Value | The data being written or read (e.g., `42`). |
+| **t** | Thread | The ID of the execution context. |
+| **SC** | Sequentially Consistent | Strongest memory order; implies a total order of all SC operations. |
 
-### How to Run Parsing
-1.  Navigate to the `analysis/` directory.
-2.  Run the analysis script (typically inside the provided Docker environment). First load the built C11Tester docker image: 
-    ```shell
-    docker run -it -v $(pwd):/analysis pcp:latest
-    ```
-    When inside the image, simply run the script: 
-    ```shell
-    /analysis/run_analysis.sh
-    ```
-    *This compiles the target programs, runs them 100 times each with `-verbose=2` and generates the JSON files.*
+## Running the Tools
 
-### Parsed Output
-Each JSON file contains the following structure:
-```json
-{
-  "execution_id": 1,
-  "events": [
-    {
-      "event_id": 1,
-      "thread": 1,
-      "action": "atomic write",
-      "memory_order": "seq_cst",
-      "location": "0x100",
-      "value": "0x1",
-      "rf": null,
-      "cv": "(1, 0)"
-    }
-  ]
-}
+Before running any tool, ensure your `PYTHONPATH` includes the project root so the `algorithm` package can be imported:
+
+```shell
+export PYTHONPATH=$PYTHONPATH:.
 ```
 
+## Full Execution Workflow
 
+A master script is provided to automate the entire process. This script should be run **from the project root on your host machine**.
+
+```shell
+chmod +x c11_bounded_window.sh
+./c11_bounded_window.sh
+```
+
+This will:
+1.  **Step 1:** Run `tools/run_analysis.sh` **via Docker** (mounting current directory to `/analysis`).
+2.  **Step 2:** Run `tools/graph_generator.py` (locally on host) on all parsed programs in `data/parsed/`.
+3.  **Step 3:** Run `tools/race_detector.py` (locally on host) on every execution trace found.
+
+---
+
+## 1. Trace Analysis via Docker
+
+Step 1 requires the C11Tester environment, provided via a Docker container.
+
+### Prerequisites
+*   Built Docker image tagged as `pcp:latest`.
+
+### Running Manually
+If you wish to run only the trace analysis manually:
+```shell
+docker run --rm -v "$(pwd):/analysis" pcp:latest /analysis/tools/run_analysis.sh
+```
+This script compiles target programs, runs them with `-verbose=2`, and generates structured JSON in `data/parsed/`.
+
+---
 
 ## 2. Execution Graph Generation
 
-Once the JSON files are generated, the `graph_generator.py` script computes the execution graph based on the C11 memory model rules.
+Computes memory model relations (PO, SW, HB) and visualizes the graph.
 
-### Algorithm Steps
-The graph is constructed through the following five steps:
-
-1.  **Load JSON:** Reads the events from a single execution trace (e.g. `execution_1.json`).
-2.  **Compute `po` (Program Order):**
-    *   Connects events within the same thread.
-    *   For each thread, edges are created between an event and its immediate successor (based on `event_id`).
-3.  **Compute `sw` (Synchronized-With):**
-    *   **Phase 1: Valid `rf` edges:** For each load that reads from a store, an `sw` edge is added between the store and the load.
-    *   **Phase 2: Thread synchronization:** Connects thread lifecycle events (`thread create` $\to$ `thread start` and `thread finish` $\to$ `thread join`).
-    *   **Phase 3: Fences:** Connects a store $e_i$ to a load $e_j$ through a fence $e_f$ if $e_i \xrightarrow{po} e_f$ and $e_i \xrightarrow{rf} e_j$.
-4.  **Compute `hb` (Happens-Before):**
-    *   Computes the **transitive closure** of the set of edges ($po \cup sw$).
-    *   If $A \to B$ and $B \to C$, then $A \to C$ is added as an `hb` edge.
-5.  **Create Graph Data:**
-    *   Generates a final node structure where each node contains: `event_id`, `rf` (reads-from), `po` successors and `hb` successors.
-
-### How to Run Graph Generation
-You can process a single file or an entire directory of executions:
-
-**Process a single file:**
+### How to Run
 ```shell
-python3 analysis/graph_generator.py analysis/parsed/fences2/execution_1.json
+python3 tools/graph_generator.py data/parsed/fences2/
 ```
+Visualizations are saved in `data/graphs/`.
 
-**Process an entire directory (100 executions):**
+---
+
+## 3. Baseline Race Detection Framework
+
+Tracks memory accesses and detects races using conflict rules and Priorsets.
+
+### How to Run
 ```shell
-python3 analysis/graph_generator.py analysis/parsed/fences2/
+python3 tools/race_detector.py data/test_cases/test_hb.json
 ```
-
-### Visualization
-The script automatically generates visualizations in the `analysis/graphs/` folder:
-*   **JSON Graph:** (`*_graph.json`) Contains the 4 fields per node (id, rf, po, hb).
-*   **Execution Graph Image:** (`*_execution_graph.png`) A visual representation of the standard execution graph.
-    *   **Black edges:** Program Order (`po`)
-    *   **Red edges:** Synchronized-With (`sw`)
-    *   **Green dashed edges:** Reads-From (`rf`)
-*   **HB Graph Image:** (`*_hb_graph.png`) A visual representation of the Happens-Before relations.
-    *   **Blue edges:** Happens-Before (`hb`)
-    *   *Note: HB edges are shown in a separate graph to avoid cluttering the execution graph.*
 
 ---
 
 ## Requirements
 *   **Python 3.x**
-*   **Graphviz:** The `dot` command must be installed and available in your PATH for PNG generation.
-    ```shell
-    # macOS
-    brew install graphviz
-    # Ubuntu
-    sudo apt-get install graphviz
-    ```
+*   **Graphviz:** Required for PNG generation.

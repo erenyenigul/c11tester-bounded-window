@@ -2,18 +2,12 @@ import json
 import sys
 import os
 import subprocess
+from algorithm.common import *
 
-# helper to load json data from file
-def load_json(filepath):
-    with open(filepath, 'r') as f:
-        return json.load(f)
-
+# computes the po (program order) relation for a list of events
 def compute_po(events):
     po = []
     threads = {}
-    # for each event, we track the last event id for its thread
-    # create a po edge from the last event of the same thread to the current event
-    # then update the last event id for that thread
     for event in events:
         t = event['thread']
         eid = event['event_id']
@@ -22,14 +16,7 @@ def compute_po(events):
         threads[t] = eid
     return po
 
-def is_store(action):
-    a = action.lower()
-    return 'write' in a or 'store' in a or 'rmw' in a
-
-def is_load(action):
-    a = action.lower()
-    return 'read' in a or 'load' in a or 'rmw' in a
-
+# computes the sw (synchronized-with) relation for a list of events
 def compute_sw(events, po):
     sw = []
     event_by_id = {e['event_id']: e for e in events}
@@ -56,7 +43,7 @@ def compute_sw(events, po):
                     
     # phase 3: fences
     for ef in events:
-        if "fence" in ef['action'].lower():
+        if is_fence(ef['action']):
             for ei_id, ef_id in po:
                 if ef_id == ef['event_id']:
                     ei = event_by_id.get(ei_id)
@@ -69,9 +56,8 @@ def compute_sw(events, po):
                                     
     return list(set(sw))
 
-
+# computes the hb (happens-before) relation as the transitive closure of po and sw
 def compute_hb(events, po, sw):
-    # hb is the transitive closure of (po union sw)
     adj = {e['event_id']: set() for e in events}
     for u, v in po:
         adj[u].add(v)
@@ -81,7 +67,6 @@ def compute_hb(events, po, sw):
     hb = []
     nodes = [e['event_id'] for e in events]
     
-    # perform dfs from each node to find all reachable nodes in the hb graph
     for start_node in nodes:
         visited = set()
         stack = [start_node]
@@ -96,11 +81,9 @@ def compute_hb(events, po, sw):
             
     return hb
 
-
+# prepares graph data for json output
 def create_graph_data(events, po, hb):
-    # nodes should have 4 fields  (event id, rf, po, hb)
     graph = {}
-    
     po_map = {e['event_id']: [] for e in events}
     for u, v in po:
         po_map[u].append(v)
@@ -119,8 +102,8 @@ def create_graph_data(events, po, hb):
         }
     return graph
 
-# visualize the execution graph using dot, save the dot file and png file
-def visualize_execution_graph(events, po, sw, hb, output_png):
+# visualize the execution graph using dot
+def visualize_execution_graph(events, po, sw, output_png):
     dot_content = "digraph G {\n"
     dot_content += "  rankdir=LR;\n"
     dot_content += "  node [shape=box];\n"
@@ -135,7 +118,6 @@ def visualize_execution_graph(events, po, sw, hb, output_png):
     for u, v in sw:
         dot_content += f'  {u} -> {v} [label="sw", color="red"];\n'
     
-    # also show rf edges if present
     for e in events:
         if e['rf'] is not None:
             dot_content += f'  {e["rf"]} -> {e["event_id"]} [label="rf", color="green", style="dashed"];\n'
@@ -151,6 +133,7 @@ def visualize_execution_graph(events, po, sw, hb, output_png):
         print(f"Execution graph saved to {output_png}")
     except Exception as e:
         print(f"Error running dot for {output_png}: {e}")
+
 
 # visualize the happens-before graph using dot
 def visualize_hb_graph(events, hb, output_png):
@@ -176,53 +159,3 @@ def visualize_hb_graph(events, hb, output_png):
         print(f"HB graph saved to {output_png}")
     except Exception as e:
         print(f"Error running dot for {output_png}: {e}")
-
-
-# main function to process a json file and generate graph data and visualization
-def process_file(json_path, output_dir):
-    data = load_json(json_path)
-    events = data['events']
-    base_name = os.path.basename(json_path).replace(".json", "")
-    
-    print(f"Processing {base_name}...")
-    po = compute_po(events)
-    sw = compute_sw(events, po)
-    hb = compute_hb(events, po, sw)
-    graph = create_graph_data(events, po, hb)
-    
-    json_out = os.path.join(output_dir, f"{base_name}_graph.json")
-    with open(json_out, "w") as f:
-        json.dump(graph, f, indent=2)
-    
-    exec_png_out = os.path.join(output_dir, f"{base_name}_execution_graph.png")
-    visualize_execution_graph(events, po, sw, hb, exec_png_out)
-
-    hb_png_out = os.path.join(output_dir, f"{base_name}_hb_graph.png")
-    visualize_hb_graph(events, hb, hb_png_out)
-
-
-def main():
-    if len(sys.argv) < 2:
-        print("Usage: python graph_generator.py <json_file_or_directory>")
-        sys.exit(1)
-        
-    path = sys.argv[1]
-    parts = os.path.normpath(path).split(os.sep)
-
-    if len(parts) < 2:
-        print("Longer path expected.")
-        sys.exit(1)
-
-    output_dir = os.path.join("analysis/graphs", os.path.join(parts[-2], parts[-1]))
-    os.makedirs(output_dir, exist_ok=True)
-    
-    if os.path.isdir(path):
-        # sort files to process them in order
-        files = sorted([f for f in os.listdir(path) if f.endswith(".json") and not f.endswith("_graph.json")])
-        for f in files:
-            process_file(os.path.join(path, f), output_dir)
-    else:
-        process_file(path, output_dir)
-
-if __name__ == "__main__":
-    main()

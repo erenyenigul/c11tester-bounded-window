@@ -1,14 +1,19 @@
 #!/bin/bash
 
+# This script runs the C11Tester analysis.
+# It is intended to be executed inside the C11Tester Docker container.
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
 TEST_DIR=~/c11tester-tests/test
 OBJ_DIR=~/objects
-ANALYSIS_DIR=/analysis/parsed
+ANALYSIS_DIR="$PROJECT_ROOT/data/parsed"
 
 mkdir -p "$ANALYSIS_DIR"
 mkdir -p "$OBJ_DIR"
 
-# Compile with clang all tester programs in the TEST_DIR and store their
-# object file at OBJ_DIR
+echo "Compiling test programs..."
 for file in "$TEST_DIR"/*.c "$TEST_DIR"/*.cc; do
     [ -e "$file" ] || continue
 
@@ -24,7 +29,7 @@ for file in "$TEST_DIR"/*.c "$TEST_DIR"/*.cc; do
     }
 done
 
-# For all object files, run them with C11Tester and parse their output
+echo "Running C11Tester and parsing traces..."
 for obj in "$OBJ_DIR"/*; do
     [ -e "$obj" ] || continue
 
@@ -36,6 +41,6 @@ for obj in "$OBJ_DIR"/*; do
     (
         cd "$dir"
         C11TESTER="-v2 -x 100" "$obj" > output.txt 2>&1
-        python3 "/analysis/c11_parser.py" "$dir"
+        python3 "$PROJECT_ROOT/tools/c11_parser.py" "$dir"
     )
 done

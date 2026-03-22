@@ -6,7 +6,27 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-TEST_DIR=~/c11tester-tests/test
+MODE="$1"
+
+if [ -z "$MODE" ]; then
+    echo "Usage: $0 {c11tester|bounded}"
+    exit 1
+fi
+
+case "$MODE" in
+    c11tester)
+        TEST_DIR="$HOME/c11tester-tests/test"
+        ;;
+    bounded)
+        TEST_DIR="$PROJECT_ROOT/data/test_programs"
+        ;;
+    *)
+        echo "Invalid mode: $MODE"
+        echo "Usage: $0 {c11tester|bounded}"
+        exit 1
+        ;;
+esac
+
 OBJ_DIR=~/objects
 ANALYSIS_DIR="$PROJECT_ROOT/data/parsed"
 

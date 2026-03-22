@@ -9,6 +9,18 @@ def split_executions(text):
 
 def parse_trace(trace_text, exec_id):
     events = []
+    # always add initial state event (ID 0) as a starting point
+    events.append({
+        "event_id": 0,
+        "thread": 0,
+        "action": "initial write",
+        "memory_order": "relaxed",
+        "location": "initial",
+        "value": "0",
+        "rf": None,
+        "cv": "( 0)"
+    })
+    
     lines = trace_text.splitlines()
 
     for line in lines:

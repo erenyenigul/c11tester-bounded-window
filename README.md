@@ -68,9 +68,9 @@ Step 1 requires the C11Tester environment, provided via a Docker container.
 *   Built Docker image tagged as `pcp:latest`.
 
 ### Running Manually
-If you wish to run only the trace analysis manually:
+If you wish to run only the trace analysis manually, pick your test suite (`bounded` for our custom tests, or `c11tester` for the original C11Tester suite) and run:
 ```shell
-docker run --rm -v "$(pwd):/analysis" pcp:latest /analysis/tools/run_analysis.sh
+docker run --rm -v "$(pwd):/analysis" pcp:latest /analysis/tools/run_analysis.sh {bounded, c11tester}
 ```
 This script compiles target programs, runs them with `-verbose=2`, and generates structured JSON in `data/parsed/`.
 

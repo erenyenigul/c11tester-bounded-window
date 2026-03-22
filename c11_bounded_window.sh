@@ -11,7 +11,7 @@ export PYTHONPATH=$PYTHONPATH:.
 
 # 1. Compilation, Execution and Parsing via Docker
 echo "--- Step 1: Running C11 Analysis via Docker ---"
-docker run --rm -v "$(pwd):/analysis" pcp:latest /analysis/tools/run_analysis.sh
+docker run --rm -v "$(pwd):/analysis" pcp:latest /analysis/tools/run_analysis.sh bounded
 
 # 2. Graph Generation
 echo ""

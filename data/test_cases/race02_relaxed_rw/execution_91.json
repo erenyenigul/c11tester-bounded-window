@@ -24,10 +24,10 @@
     {
       "event_id": 2,
       "thread": 1,
-      "action": "pthread",
-      "memory_order": "create",
-      "location": "seq_cst",
-      "value": "00002AAAAB2ABC10",
+      "action": "pthread create",
+      "memory_order": "seq_cst",
+      "location": "00002AAAAB2ABC10",
+      "value": "0x2aaaab2abb90",
       "rf": null,
       "cv": "( 0,  2)"
     },
@@ -44,10 +44,10 @@
     {
       "event_id": 4,
       "thread": 1,
-      "action": "pthread",
-      "memory_order": "create",
-      "location": "seq_cst",
-      "value": "00002AAAAB2ABC08",
+      "action": "pthread create",
+      "memory_order": "seq_cst",
+      "location": "00002AAAAB2ABC08",
+      "value": "0x2aaaab2abb90",
       "rf": null,
       "cv": "( 0,  4)"
     },
@@ -683,43 +683,43 @@
     },
     {
       "event_id": 68,
-      "thread": 1,
-      "action": "pthread",
-      "memory_order": "join",
-      "location": "seq_cst",
-      "value": "00002AAABAD4DA98",
-      "rf": null,
-      "cv": "( 0, 68, 37)"
-    },
-    {
-      "event_id": 69,
       "thread": 3,
       "action": "atomic read",
       "memory_order": "relaxed",
       "location": "0000000000404068",
       "value": "0x2a",
       "rf": 36,
-      "cv": "( 0,  4,  0, 69)"
+      "cv": "( 0,  4,  0, 68)"
     },
     {
-      "event_id": 70,
+      "event_id": 69,
       "thread": 3,
       "action": "thread finish",
       "memory_order": "seq_cst",
       "location": "00002AAABAF4F058",
       "value": "0xdeadbeef",
       "rf": null,
-      "cv": "( 0,  4,  0, 70)"
+      "cv": "( 0,  4,  0, 69)"
+    },
+    {
+      "event_id": 70,
+      "thread": 1,
+      "action": "pthread join",
+      "memory_order": "seq_cst",
+      "location": "00002AAABAD4DA98",
+      "value": "0x2",
+      "rf": null,
+      "cv": "( 0, 70, 37)"
     },
     {
       "event_id": 71,
       "thread": 1,
-      "action": "pthread",
-      "memory_order": "join",
-      "location": "seq_cst",
-      "value": "00002AAABAF4F058",
+      "action": "pthread join",
+      "memory_order": "seq_cst",
+      "location": "00002AAABAF4F058",
+      "value": "0x3",
       "rf": null,
-      "cv": "( 0, 71, 37, 70)"
+      "cv": "( 0, 71, 37, 69)"
     },
     {
       "event_id": 72,
@@ -729,7 +729,7 @@
       "location": "0000000000404064",
       "value": "0x1e",
       "rf": 35,
-      "cv": "( 0, 72, 37, 70)"
+      "cv": "( 0, 72, 37, 69)"
     },
     {
       "event_id": 73,
@@ -739,7 +739,7 @@
       "location": "00002AAAB95CC110",
       "value": "0xdeadbeef",
       "rf": null,
-      "cv": "( 0, 73, 37, 70)"
+      "cv": "( 0, 73, 37, 69)"
     }
   ]
 }

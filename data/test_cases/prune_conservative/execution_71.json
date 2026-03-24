@@ -24,10 +24,10 @@
     {
       "event_id": 2,
       "thread": 1,
-      "action": "pthread",
-      "memory_order": "create",
-      "location": "seq_cst",
-      "value": "00002AAAAB2ABC00",
+      "action": "pthread create",
+      "memory_order": "seq_cst",
+      "location": "00002AAAAB2ABC10",
+      "value": "0x2aaaab2abb90",
       "rf": null,
       "cv": "( 0,  2)"
     },
@@ -44,10 +44,10 @@
     {
       "event_id": 4,
       "thread": 1,
-      "action": "pthread",
-      "memory_order": "create",
-      "location": "seq_cst",
-      "value": "00002AAAAB2ABBF8",
+      "action": "pthread create",
+      "memory_order": "seq_cst",
+      "location": "00002AAAAB2ABC08",
+      "value": "0x2aaaab2abb90",
       "rf": null,
       "cv": "( 0,  4)"
     },
@@ -274,10 +274,10 @@
     {
       "event_id": 27,
       "thread": 1,
-      "action": "pthread",
-      "memory_order": "join",
-      "location": "seq_cst",
-      "value": "00002AAABAD4DA98",
+      "action": "pthread join",
+      "memory_order": "seq_cst",
+      "location": "00002AAABAD4DA98",
+      "value": "0x2",
       "rf": null,
       "cv": "( 0, 27, 26)"
     },
@@ -287,9 +287,9 @@
       "action": "atomic read",
       "memory_order": "acquire",
       "location": "000000000040406C",
-      "value": "0xd",
-      "rf": 18,
-      "cv": "( 0,  4, 18, 28)"
+      "value": "0x3",
+      "rf": 8,
+      "cv": "( 0,  4,  8, 28)"
     },
     {
       "event_id": 29,
@@ -297,9 +297,9 @@
       "action": "atomic read",
       "memory_order": "acquire",
       "location": "000000000040406C",
-      "value": "0x11",
-      "rf": 22,
-      "cv": "( 0,  4, 22, 29)"
+      "value": "0x9",
+      "rf": 14,
+      "cv": "( 0,  4, 14, 29)"
     },
     {
       "event_id": 30,
@@ -324,10 +324,10 @@
     {
       "event_id": 32,
       "thread": 1,
-      "action": "pthread",
-      "memory_order": "join",
-      "location": "seq_cst",
-      "value": "00002AAABAF4F058",
+      "action": "pthread join",
+      "memory_order": "seq_cst",
+      "location": "00002AAABAF4F058",
+      "value": "0x3",
       "rf": null,
       "cv": "( 0, 32, 26, 31)"
     },

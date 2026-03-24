@@ -24,10 +24,10 @@
     {
       "event_id": 2,
       "thread": 1,
-      "action": "pthread",
-      "memory_order": "create",
-      "location": "seq_cst",
-      "value": "00002AAAAB2ABC00",
+      "action": "pthread create",
+      "memory_order": "seq_cst",
+      "location": "00002AAAAB2ABC00",
+      "value": "0x2aaaab2abb70",
       "rf": null,
       "cv": "( 0,  2)"
     },
@@ -44,10 +44,10 @@
     {
       "event_id": 4,
       "thread": 1,
-      "action": "pthread",
-      "memory_order": "create",
-      "location": "seq_cst",
-      "value": "00002AAAAB2ABBF8",
+      "action": "pthread create",
+      "memory_order": "seq_cst",
+      "location": "00002AAAAB2ABBF8",
+      "value": "0x2aaaab2abb70",
       "rf": null,
       "cv": "( 0,  4)"
     },
@@ -64,10 +64,10 @@
     {
       "event_id": 6,
       "thread": 1,
-      "action": "pthread",
-      "memory_order": "create",
-      "location": "seq_cst",
-      "value": "00002AAAAB2ABBF0",
+      "action": "pthread create",
+      "memory_order": "seq_cst",
+      "location": "00002AAAAB2ABBF0",
+      "value": "0x2aaaab2abb70",
       "rf": null,
       "cv": "( 0,  6)"
     },
@@ -413,13 +413,13 @@
     },
     {
       "event_id": 41,
-      "thread": 3,
-      "action": "atomic read",
-      "memory_order": "acquire",
-      "location": "0000000000404064",
-      "value": "0x1c",
-      "rf": 35,
-      "cv": "( 0,  4, 35, 41)"
+      "thread": 1,
+      "action": "pthread join",
+      "memory_order": "seq_cst",
+      "location": "00002AAABAD4DA98",
+      "value": "0x2",
+      "rf": null,
+      "cv": "( 0, 41, 38)"
     },
     {
       "event_id": 42,
@@ -427,9 +427,9 @@
       "action": "atomic read",
       "memory_order": "acquire",
       "location": "0000000000404064",
-      "value": "0x1c",
-      "rf": 35,
-      "cv": "( 0,  4, 35, 42)"
+      "value": "0x15",
+      "rf": 28,
+      "cv": "( 0,  4, 28, 42)"
     },
     {
       "event_id": 43,
@@ -437,19 +437,19 @@
       "action": "atomic read",
       "memory_order": "acquire",
       "location": "0000000000404064",
-      "value": "0x1c",
-      "rf": 35,
-      "cv": "( 0,  4, 35, 43)"
+      "value": "0x17",
+      "rf": 30,
+      "cv": "( 0,  4, 30, 43)"
     },
     {
       "event_id": 44,
-      "thread": 1,
-      "action": "pthread",
-      "memory_order": "join",
-      "location": "seq_cst",
-      "value": "00002AAABAD4DA98",
-      "rf": null,
-      "cv": "( 0, 44, 38)"
+      "thread": 3,
+      "action": "atomic read",
+      "memory_order": "acquire",
+      "location": "0000000000404064",
+      "value": "0x19",
+      "rf": 32,
+      "cv": "( 0,  4, 32, 44)"
     },
     {
       "event_id": 45,
@@ -494,20 +494,20 @@
     {
       "event_id": 49,
       "thread": 1,
-      "action": "pthread",
-      "memory_order": "join",
-      "location": "seq_cst",
-      "value": "00002AAABAF4F058",
+      "action": "pthread join",
+      "memory_order": "seq_cst",
+      "location": "00002AAABAF4F058",
+      "value": "0x3",
       "rf": null,
       "cv": "( 0, 49, 38, 48)"
     },
     {
       "event_id": 50,
       "thread": 1,
-      "action": "pthread",
-      "memory_order": "join",
-      "location": "seq_cst",
-      "value": "00002AAABB1505E8",
+      "action": "pthread join",
+      "memory_order": "seq_cst",
+      "location": "00002AAABB1505E8",
+      "value": "0x4",
       "rf": null,
       "cv": "( 0, 50, 38, 48, 40)"
     },

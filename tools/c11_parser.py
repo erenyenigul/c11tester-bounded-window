@@ -49,7 +49,7 @@ def parse_trace(trace_text, exec_id):
             thread = int(parts[1])
 
             # 3. handle multi-word action
-            if parts[2] == "thread" or parts[2] == "atomic":
+            if parts[2] == "thread" or parts[2] == "atomic" or parts[2] == "pthread":
                 action = parts[2] + " " + parts[3]
                 memory_order = parts[4]
                 idx = 5

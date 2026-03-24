@@ -16,7 +16,7 @@ class DataRace:
 # this class represents the overall execution state and implements the race detection algorithm
 class ExecutionState:
     def __init__(self, pruning_strategy=None):
-        self.nodes : Dict[str, Node] = {}             # event_id -> Node (mapping of all events)
+        self.nodes: Dict[int, Node] = {}             # event_id -> Node (mapping of all events)
         self.ALocs = {}             # location -> [Node] (atomic accesses)
         self.NALocs = {}            # location -> [Node] (nonatomic accesses)
         self.threads_history = {}   # thread_id -> [Node] (events in thread)

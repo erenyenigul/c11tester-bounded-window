@@ -1,31 +1,48 @@
-class NoPruningStrategy:
-    def prune(self, state):
-        return
+class PruningStrategy:
+    def __init__(self, prune_interval=1):
+        self.prune_interval = prune_interval
+        self._count = 0  # events seen since last prune attempt
+
+    def step(self, state):
+        """Called after every event. Delegates to _prune every prune_interval events."""
+        self._count += 1
+        if self._count % self.prune_interval == 0:
+            self._prune(state)
+
+    def _prune(self, state):
+        """Override in subclasses to implement pruning logic."""
+        raise NotImplementedError("Subclasses must implement _prune method")
 
 
-class ConservativePruningStrategy:
-    def prune(self, state):
-        """
-        Conservative pruning from Section 6.1 of the C11Tester paper.
+class NoPruningStrategy(PruningStrategy):
+    
+    def _prune(self, state):
+        pass
 
-        The idea is to find old stores that no thread could ever read from
-        again, and throw them away. We do this in four passes:
+class ConservativePruningStrategy(PruningStrategy):
+    """
+    Conservative pruning from Section 6.1 of the C11Tester paper.
 
-        1. Compute CVmin, the component-wise minimum of each thread's clock
-           vector. CVmin[t] is the latest event in thread t that all threads
-           have already seen.
+    The idea is to find old stores that no thread could ever read from
+    again, and throw them away. We do this in four passes:
 
-        2. For each memory location, find the most recent store within CVmin.
-           Any store older than that one can never be read by anyone, so it
-           is safe to delete. We approximate mo-order by event_id order.
+    1. Compute CVmin, the component-wise minimum of each thread's clock
+       vector. CVmin[t] is the latest event in thread t that all threads
+       have already seen.
 
-        3. Any load pointing at a deleted store becomes meaningless, so
-           delete those too.
+    2. For each memory location, find the most recent store within CVmin.
+       Any store older than that one can never be read by anyone, so it
+       is safe to delete. We approximate mo-order by event_id order.
 
-        4. Release and SC fences strictly before CVmin are redundant since
-           all threads have moved past them. Acquire fences can always be
-           dropped since their effect is baked into subsequent clock vectors.
-        """
+    3. Any load pointing at a deleted store becomes meaningless, so
+       delete those too.
+
+    4. Release and SC fences strictly before CVmin are redundant since
+       all threads have moved past them. Acquire fences can always be
+       dropped since their effect is baked into subsequent clock vectors.
+    """
+
+    def _prune(self, state):
         if not state.threads_history:
             return
 
@@ -143,13 +160,11 @@ class ConservativePruningStrategy:
             ]
 
 
-class AggressivePruningStrategy:
+class AggressivePruningStrategy(PruningStrategy):
 
-    def __init__(self, window_size):
+    def __init__(self, window_size, prune_interval=1):
+        super().__init__(prune_interval)
         self.window_size = window_size
 
-    def prune(self, state):
-        """
-        Not implemented yet.
-        """
-        return
+    def _prune(self, state):
+        pass

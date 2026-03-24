@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import List, Dict
 
 from algorithm.node import Node
-from algorithm.prune import NoPruningStrategy
+from algorithm.prune import NoPruningStrategy, PruningStrategy
 
 @dataclass
 class DataRace:
@@ -25,7 +25,7 @@ class ExecutionState:
         self.release_fences = {}    # thread_id -> [Node] (release fences per thread)
         self.acquire_fences = {}    # thread_id -> [Node] (acquire fences per thread)
         self.sc_stores = {}         # location -> [Node] (seq_cst stores per location)
-        self.pruning_strategy = NoPruningStrategy() if pruning_strategy is None else pruning_strategy
+        self.pruning_strategy : PruningStrategy = NoPruningStrategy() if pruning_strategy is None else pruning_strategy
 
     def get_last_sc_fence(self, thread_id):
         fences = self.sc_fences.get(thread_id, [])
@@ -299,7 +299,7 @@ class ExecutionState:
         else:
             self.NALocs.setdefault(node.location, []).append(node)
 
-        self.pruning_strategy.prune(self)
+        self.pruning_strategy.step(self)
 
     def check_data_race(self, node: Node):
         # conflicts: same location, at least one write, at least one non-atomic

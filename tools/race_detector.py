@@ -6,9 +6,9 @@ from algorithm.race import detect_from_multiple_executions
 
 def make_pruning_strategy(args):
     if args.pruning_mode == "conservative":
-        return ConservativePruningStrategy()
+        return ConservativePruningStrategy(prune_interval=args.prune_interval)
     if args.pruning_mode == "aggressive":
-        return AggressivePruningStrategy(args.window_size)
+        return AggressivePruningStrategy(args.window_size, prune_interval=args.prune_interval)
     return NoPruningStrategy()
 
 def main():
@@ -29,8 +29,8 @@ def main():
     parser.add_argument(
         "--prune-interval",
         type=int,
-        default=64,
-        help="Trigger pruning every N events (default: 64)",
+        default=16,
+        help="Trigger pruning every N events (default: 16)",
     )
     args = parser.parse_args()
 

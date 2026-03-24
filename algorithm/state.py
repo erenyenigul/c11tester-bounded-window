@@ -1,10 +1,11 @@
 from typing import List
 
 from algorithm.node import Node
+from algorithm.prune import NoPruningStrategy
 
 # this class represents the overall execution state and implements the race detection algorithm
 class ExecutionState:
-    def __init__(self):
+    def __init__(self, pruning_strategy=None):
         self.nodes = {}             # event_id -> Node (mapping of all events)
         self.ALocs = {}             # location -> [Node] (atomic accesses)
         self.NALocs = {}            # location -> [Node] (nonatomic accesses)
@@ -14,6 +15,7 @@ class ExecutionState:
         self.release_fences = {}    # thread_id -> [Node] (release fences per thread)
         self.acquire_fences = {}    # thread_id -> [Node] (acquire fences per thread)
         self.sc_stores = {}         # location -> [Node] (seq_cst stores per location)
+        self.pruning_strategy = NoPruningStrategy() if pruning_strategy is None else pruning_strategy
 
     def get_last_sc_fence(self, thread_id):
         fences = self.sc_fences.get(thread_id, [])
@@ -254,8 +256,8 @@ class ExecutionState:
         if node.is_atomic():
             if node.is_store():
                 pset = self.write_prior_set(node)
-                if pset:
-                    print(f"Node {node.event_id} (Store) adding priorset edges: {pset}")
+                #if pset:
+                #    print(f"Node {node.event_id} (Store) adding priorset edges: {pset}")
                 node.prior_set_edges.extend(list(pset))
                 for pid in pset:
                     node.hb_reachable.add(pid)
@@ -266,7 +268,7 @@ class ExecutionState:
                 if store_node:
                     pset, ok = self.read_prior_set(node, store_node)
                     if ok and pset:
-                        print(f"Node {node.event_id} (Load) adding priorset edges: {pset}")
+                        #print(f"Node {node.event_id} (Load) adding priorset edges: {pset}")
                         node.prior_set_edges.extend(list(pset))
                         for pid in pset:
                             node.hb_reachable.add(pid)
@@ -293,9 +295,12 @@ class ExecutionState:
         else:
             self.NALocs.setdefault(node.location, []).append(node)
 
-    def check_data_race(self, node):
+        self.pruning_strategy.prune(self)
+
+    def check_data_race(self, node: Node):
         # conflicts: same location, at least one write, at least one non-atomic
-        prev_accesses = self.ALocs.get(node.location, []) + self.NALocs.get(node.location, [])
+        prev_accesses : List[Node] = self.ALocs.get(node.location, []) + self.NALocs.get(node.location, [])
+        
         for prev in prev_accesses:
             if node.is_atomic() and prev.is_atomic():
                 # we ignore non-relaxed atomics
@@ -309,10 +314,10 @@ class ExecutionState:
                 
                 race = (prev, node)
                 self.races.append(race)
-                print(f"DATA RACE detected at {node.location}: Node {prev.event_id} and Node {node.event_id}")
 
     def report(self):
         if not self.races:
             print("No data races detected.")
         else:
-            print(f"Total data races: {len(self.races)}")
+            unique_locations = set(r[0].location for r in self.races) 
+            print(f"Total data races in {len(unique_locations)} locations:\n {", ".join(unique_locations)}")

@@ -35,29 +35,18 @@ class ConservativePruningStrategy:
         if not thread_last:
             return
 
-        # hb_reachable stores event ids, not thread ids, so we look each
-        # one up to find its thread and track the max event_id per thread.
-        def compute_cv(last_node):
-            cv = {last_node.thread: last_node.event_id}
-            for eid in last_node.hb_reachable:
-                n = state.nodes.get(eid)
-                if n:
-                    cv[n.thread] = max(cv.get(n.thread, 0), n.event_id)
-            return cv
-
+        # Each node's cv already maps thread -> max epoch seen (including self),
+        # so CVmin is just the component-wise intersection of all last-node CVs.
         # Thread 0 only holds the initial write and knows nothing about other
         # threads, so we skip it to avoid collapsing CVmin to zero.
         cvmin = None
         for last_node in thread_last.values():
             if last_node.action == "initial write":
                 continue
-            cv = compute_cv(last_node)
             if cvmin is None:
-                cvmin = dict(cv)
+                cvmin = last_node.cv.copy()
             else:
-                all_threads = set(cvmin) | set(cv)
-                cvmin = {t: min(cvmin.get(t, 0), cv.get(t, 0))
-                         for t in all_threads}
+                cvmin = cvmin.intersect(last_node.cv)
 
         if cvmin is None:
             return
@@ -71,7 +60,7 @@ class ConservativePruningStrategy:
 
             latest_synced = None
             for s in stores_at_loc:
-                if s.event_id <= cvmin.get(s.thread, 0):
+                if s.event_id <= cvmin.get(s.thread):
                     if latest_synced is None or s.event_id > latest_synced.event_id:
                         latest_synced = s
 
@@ -91,15 +80,13 @@ class ConservativePruningStrategy:
         # Strict less-than keeps the fence at the CVmin boundary alive since
         # it is still the anchor for future synchronisation checks.
         for tid, fences in state.release_fences.items():
-            cvmin_t = cvmin.get(tid, 0)
             for f in fences:
-                if f.event_id < cvmin_t:
+                if f.event_id < cvmin.get(tid):
                     prunable.add(f.event_id)
 
         for tid, fences in state.sc_fences.items():
-            cvmin_t = cvmin.get(tid, 0)
             for f in fences:
-                if f.event_id < cvmin_t:
+                if f.event_id < cvmin.get(tid):
                     prunable.add(f.event_id)
 
         # Acquire fences are always safe to drop.

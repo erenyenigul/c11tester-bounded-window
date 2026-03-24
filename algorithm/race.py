@@ -6,13 +6,18 @@ from algorithm.node import Node
 from algorithm.state import DataRace, ExecutionState
 
 @dataclass
+class SingleExecutionResult:
+    races: list[DataRace]
+    state: ExecutionState
+
+@dataclass
 class ProgramRaceSummary:
     num_executions: int
     num_executions_with_races: int
     total_races: int
     races: dict[str, list[DataRace]]
 
-def detect_from_single_execution(filepath: str, pruning_strategy) -> list[DataRace]:
+def detect_from_single_execution(filepath: str, pruning_strategy) -> SingleExecutionResult:
     with open(filepath, "r") as f:
         data = json.load(f)
 
@@ -32,7 +37,7 @@ def detect_from_single_execution(filepath: str, pruning_strategy) -> list[DataRa
         )
         state.add_node(node)
 
-    return state.races
+    return SingleExecutionResult(races=state.races, state=state)
 
 def detect_from_multiple_executions(execution_dir, pruning_strategy) -> ProgramRaceSummary:
     execution_files = sorted(
@@ -46,7 +51,7 @@ def detect_from_multiple_executions(execution_dir, pruning_strategy) -> ProgramR
 
     for filename in execution_files:
         filepath = os.path.join(execution_dir, filename)
-        races = detect_from_single_execution(filepath, pruning_strategy)
+        races = detect_from_single_execution(filepath, pruning_strategy).races
         if races:
             executions_with_races += 1
             total_races += len(races)

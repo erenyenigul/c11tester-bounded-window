@@ -1,4 +1,5 @@
 from algorithm.common import *
+from algorithm.clockvector import ClockVector
 
 # this class represents a single event in the execution trace, along with its relations and metadata
 class Node:
@@ -16,7 +17,7 @@ class Node:
         # necessary relations for the race detection algorithm
         self.sb_prior = None        # last event in the same thread (po)
         self.sw_prior = []          # events that synchronize with this event
-        self.hb_reachable = set()   # set of node_ids that happen before this node
+        self.cv = ClockVector({thread: event_id})  # happens-before clock vector (includes self)
         self.prior_set_edges = []   # edges added via WritePriorSet/ReadPriorSet
     
     # parse cv string into a dictionary

@@ -43,12 +43,15 @@ class ExecutionState:
         fences = self.acquire_fences.get(thread_id, [])
         return fences[-1] if fences else None
     
-    # check if u_id happens before v_id using the hb_reachable sets
+    # check if u_id happens before v_id using clock vectors
     def hb(self, u_id, v_id):
-        if u_id == v_id: return True
+        if u_id == v_id:
+            return True
+        u = self.nodes.get(u_id)
         v = self.nodes.get(v_id)
-        if not v: return False
-        return u_id in v.hb_reachable
+        if not u or not v:
+            return False
+        return v.cv.get(u.thread) >= u.event_id
 
 
     # computes the WritePriorSet for a store s is the set of stores
@@ -202,8 +205,7 @@ class ExecutionState:
         if len(self.threads_history[node.thread]) > 1:
             prev_sb = self.threads_history[node.thread][-2]
             node.sb_prior = prev_sb.event_id
-            node.hb_reachable.add(prev_sb.event_id)
-            node.hb_reachable.update(prev_sb.hb_reachable)
+            node.cv.merge(prev_sb.cv)
         
         if node.rf is not None:
             store_node = self.nodes.get(node.rf)
@@ -211,8 +213,7 @@ class ExecutionState:
                 # basic rf synchronization: store(release) -> load(acquire)
                 if node.is_acquire() and store_node.is_release():
                     node.sw_prior.append(store_node.event_id)
-                    node.hb_reachable.add(store_node.event_id)
-                    node.hb_reachable.update(store_node.hb_reachable)
+                    node.cv.merge(store_node.cv)
                 
                 # fence synchronization: release fence -> atomic store -> atomic load -> acquire fence
                 # if current node is an acquire load, it synchronizes with a release store if it reads from it.
@@ -221,11 +222,10 @@ class ExecutionState:
                     # for a load(acquire), it already synchronizes with a store(release) if it reads from it.
                     # but if it reads from any store, it might synchronize with a release fence before it.
                     last_rel_fence = self.get_last_release_fence(store_node.thread)
-                    if last_rel_fence and last_rel_fence.event_id in store_node.hb_reachable:
+                    if last_rel_fence and store_node.cv.get(last_rel_fence.thread) >= last_rel_fence.event_id:
                         # (rel-fence sb-> store) and (store rf-> load(acq)) -> sw edge from rel-fence to load(acq)
                         node.sw_prior.append(last_rel_fence.event_id)
-                        node.hb_reachable.add(last_rel_fence.event_id)
-                        node.hb_reachable.update(last_rel_fence.hb_reachable)
+                        node.cv.merge(last_rel_fence.cv)
                 
                 if node.is_load():
                     # if an acquire fence follows this load, the load must also happen-after the store.
@@ -244,23 +244,20 @@ class ExecutionState:
                          # actually, it's: (store(any) rf-> load) and (load sb-> acq-fence)
                          # AND (rel-fence sb-> store) -> rel-fence sw-> acq-fence.
                          last_rel_fence = self.get_last_release_fence(store_node.thread)
-                         if last_rel_fence and last_rel_fence.event_id in store_node.hb_reachable:
+                         if last_rel_fence and store_node.cv.get(last_rel_fence.thread) >= last_rel_fence.event_id:
                              node.sw_prior.append(last_rel_fence.event_id)
-                             node.hb_reachable.add(last_rel_fence.event_id)
-                             node.hb_reachable.update(last_rel_fence.hb_reachable)
-                         
+                             node.cv.merge(last_rel_fence.cv)
+
                          # (store(rel) rf-> load) and (load sb-> acq-fence) -> store(rel) sw-> acq-fence.
                          if store_node.is_release():
                              node.sw_prior.append(store_node.event_id)
-                             node.hb_reachable.add(store_node.event_id)
-                             node.hb_reachable.update(store_node.hb_reachable)
+                             node.cv.merge(store_node.cv)
 
         if node.action == "thread start":
             for n in self.nodes.values():
-                if n.action == "thread create" and n.location == node.location:
+                if (n.action == "thread create" or n.action == "pthread create") and n.location == node.location:
                     node.sw_prior.append(n.event_id)
-                    node.hb_reachable.add(n.event_id)
-                    node.hb_reachable.update(n.hb_reachable)
+                    node.cv.merge(n.cv)
 
         # 2. add priorset edges
         if node.is_atomic():
@@ -270,19 +267,16 @@ class ExecutionState:
                 #    print(f"Node {node.event_id} (Store) adding priorset edges: {pset}")
                 node.prior_set_edges.extend(list(pset))
                 for pid in pset:
-                    node.hb_reachable.add(pid)
-                    node.hb_reachable.update(self.nodes[pid].hb_reachable)
-            
+                    node.cv.merge(self.nodes[pid].cv)
+
             if node.is_load() and node.rf is not None:
                 store_node = self.nodes.get(node.rf)
                 if store_node:
                     pset, ok = self.read_prior_set(node, store_node)
                     if ok and pset:
-                        #print(f"Node {node.event_id} (Load) adding priorset edges: {pset}")
                         node.prior_set_edges.extend(list(pset))
                         for pid in pset:
-                            node.hb_reachable.add(pid)
-                            node.hb_reachable.update(self.nodes[pid].hb_reachable)
+                            node.cv.merge(self.nodes[pid].cv)
 
         # 3. check for data races
         self.check_data_race(node)
@@ -317,10 +311,11 @@ class ExecutionState:
                 if not node.is_relaxed() and not prev.is_relaxed():
                     continue
             if not node.is_store() and not prev.is_store(): continue
-            if prev.event_id not in node.hb_reachable:
+            if node.cv.get(prev.thread) < prev.event_id:
                 # potential race
                 # check if node hb prev (not possible in trace order usually)
-                if node.event_id in prev.hb_reachable: continue
+                if prev.cv.get(node.thread) >= node.event_id:
+                    continue
                 
                 race = DataRace(a=prev, b=node)
                 self.races.append(race)

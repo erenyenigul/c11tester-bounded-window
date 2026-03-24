@@ -25,3 +25,6 @@ def is_acquire(memory_order):
 
 def is_sc(memory_order):
     return memory_order.lower() == "seq_cst"
+
+def is_relaxed(memory_order):
+    return memory_order.lower() == "relaxed"

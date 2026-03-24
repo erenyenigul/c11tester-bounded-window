@@ -74,5 +74,8 @@ class Node:
     def is_sc(self):
         return is_sc(self.memory_order)
 
+    def is_relaxed(self):
+        return is_relaxed(self.memory_order)
+
     def __repr__(self):
         return f"Node({self.event_id}, T{self.thread}, {self.action}, {self.memory_order}, {self.location}, {self.value})"

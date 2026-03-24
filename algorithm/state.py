@@ -1,3 +1,5 @@
+from typing import List
+
 from algorithm.node import Node
 
 # this class represents the overall execution state and implements the race detection algorithm
@@ -295,7 +297,10 @@ class ExecutionState:
         # conflicts: same location, at least one write, at least one non-atomic
         prev_accesses = self.ALocs.get(node.location, []) + self.NALocs.get(node.location, [])
         for prev in prev_accesses:
-            if node.is_atomic() and prev.is_atomic(): continue
+            if node.is_atomic() and prev.is_atomic():
+                # we ignore non-relaxed atomics
+                if not node.is_relaxed() and not prev.is_relaxed():
+                    continue
             if not node.is_store() and not prev.is_store(): continue
             if prev.event_id not in node.hb_reachable:
                 # potential race

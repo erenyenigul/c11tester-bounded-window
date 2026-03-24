@@ -103,13 +103,13 @@ def parse_file(filepath, output_dir):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Please pass the absolute path of the output directory as a parameter")
+    if len(sys.argv) != 3:
+        print("Please pass the absolute path of the input file and output directory as parameters")
         sys.exit(1)
 
-    output_dir = sys.argv[1]
-    input_file = os.path.join(output_dir, "output.txt")
-    
+    input_file = sys.argv[1]
+    output_dir = sys.argv[2]
+
     if os.path.exists(input_file):
         parse_file(input_file, output_dir)
     else:

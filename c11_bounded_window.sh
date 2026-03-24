@@ -1,43 +1,74 @@
 #!/bin/bash
 
 # Master script for the C11 Bounded Window Analysis Framework.
-# This script should be run FROM THE PROJECT ROOT on your host machine.
+# Run FROM THE PROJECT ROOT on your host machine.
+#
+# Usage: ./c11_bounded_window.sh [--docker] [--parse] [--graphs] [--detect]
+# If no flags are given, all steps run.
 
-# Stop on first error
 set -e
-
-# Ensure PYTHONPATH is set so that 'algorithm' package is importable for host scripts
 export PYTHONPATH=$PYTHONPATH:.
 
-# 1. Compilation, Execution and Parsing via Docker
-echo "--- Step 1: Running C11 Analysis via Docker ---"
-docker run --rm -v "$(pwd):/analysis" pcp:latest /analysis/tools/run_analysis.sh bounded
+RUN_DOCKER=false
+RUN_PARSE=false
+RUN_GRAPHS=false
+RUN_DETECT=false
 
-# 2. Graph Generation
-echo ""
-echo "--- Step 2: Generating Execution Graphs (on host) ---"
-for program_dir in data/parsed/*; do
-    if [ -d "$program_dir" ]; then
-        echo "Processing program: $(basename "$program_dir")"
+if [ $# -eq 0 ]; then
+    RUN_DOCKER=true
+    RUN_PARSE=true
+    RUN_GRAPHS=false # it takes a long time to generate graphs for all programs, so we disable it by default
+    RUN_DETECT=true
+fi
+
+for arg in "$@"; do
+    case "$arg" in
+        --docker) RUN_DOCKER=true ;;
+        --parse)  RUN_PARSE=true ;;
+        --graphs) RUN_GRAPHS=true ;;
+        --detect) RUN_DETECT=true ;;
+        *)
+            echo "Unknown option: $arg"
+            echo "Usage: $0 [--docker] [--parse] [--graphs] [--detect]"
+            exit 1
+            ;;
+    esac
+done
+
+if $RUN_DOCKER; then
+    echo "--- Step 1: Running C11Tester via Docker ---"
+    docker run --rm -v "$(pwd):/analysis" pcp:latest bash /analysis/tools/run_c11tester.sh bounded
+fi
+
+if $RUN_PARSE; then
+    echo ""
+    echo "--- Step 2: Parsing C11Tester traces ---"
+    for program_dir in data/raw/*; do
+        [ -d "$program_dir" ] || continue
+        echo "Parsing: $(basename "$program_dir")"
+        python3 tools/c11_parser.py "$program_dir"/output.txt data/parsed/$(basename "$program_dir")
+    done
+fi
+
+if $RUN_GRAPHS; then
+    echo ""
+    echo "--- Step 3: Generating Execution Graphs ---"
+    for program_dir in data/parsed/*; do
+        [ -d "$program_dir" ] || continue
+        echo "Processing: $(basename "$program_dir")"
         python3 tools/graph_generator.py "$program_dir"
-    fi
-done
+    done
+fi
 
-# 3. Baseline Race Detection
-echo ""
-echo "--- Step 3: Running Baseline Race Detection (on host) ---"
-for program_dir in data/parsed/*; do
-    if [ -d "$program_dir" ]; then
-        echo "Detecting races for program: $(basename "$program_dir")"
-        for execution_file in "$program_dir"/execution_*.json; do
-            # Skip the graph.json files generated in Step 2
-            if [ -f "$execution_file" ] && [[ ! "$execution_file" == *"_graph.json" ]]; then
-                echo "Trace: $(basename "$execution_file")"
-                python3 tools/race_detector.py "$execution_file"
-            fi
-        done
-    fi
-done
+if $RUN_DETECT; then
+    echo ""
+    echo "--- Step 4: Running Race Detection ---"
+    for program_dir in data/parsed/*; do
+        [ -d "$program_dir" ] || continue
+        echo "Detecting races for: $(basename "$program_dir")"
+        python3 tools/race_detector.py --pruning-mode conservative "$program_dir"
+    done
+fi
 
 echo ""
-echo "--- C11 Bounded Window Analysis Framework: Task Completed ---"
+echo "--- Done ---"

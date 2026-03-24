@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# This script runs the C11Tester analysis.
-# It is intended to be executed inside the C11Tester Docker container.
+# Compiles test programs and runs C11Tester on them.
+# Intended to be executed inside the C11Tester Docker container.
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
@@ -28,9 +28,9 @@ case "$MODE" in
 esac
 
 OBJ_DIR=~/objects
-ANALYSIS_DIR="$PROJECT_ROOT/data/parsed"
+RAW_DIR="$PROJECT_ROOT/data/raw"
 
-mkdir -p "$ANALYSIS_DIR"
+mkdir -p "$RAW_DIR"
 mkdir -p "$OBJ_DIR"
 
 echo "Compiling test programs..."
@@ -49,18 +49,17 @@ for file in "$TEST_DIR"/*.c "$TEST_DIR"/*.cc; do
     }
 done
 
-echo "Running C11Tester and parsing traces..."
+echo "Running C11Tester..."
 for obj in "$OBJ_DIR"/*; do
     [ -e "$obj" ] || continue
 
     name=$(basename "$obj")
-    dir="$ANALYSIS_DIR/$name"
+    dir="$RAW_DIR/$name"
 
     mkdir -p "$dir"
 
     (
         cd "$dir"
         C11TESTER="-v2 -x 100" "$obj" > output.txt 2>&1
-        python3 "$PROJECT_ROOT/tools/c11_parser.py" "$dir"
     )
 done

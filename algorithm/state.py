@@ -1,16 +1,28 @@
-from typing import List
+from dataclasses import dataclass
+from typing import List, Dict
 
 from algorithm.node import Node
 from algorithm.prune import NoPruningStrategy
 
+@dataclass
+class DataRace:
+    location: str
+    a: Node
+    b: Node
+
+    def __init__(self, a, b):
+        self.a = a
+        self.b = b
+        self.location = a.location
+
 # this class represents the overall execution state and implements the race detection algorithm
 class ExecutionState:
     def __init__(self, pruning_strategy=None):
-        self.nodes = {}             # event_id -> Node (mapping of all events)
+        self.nodes : Dict[str, Node] = {}             # event_id -> Node (mapping of all events)
         self.ALocs = {}             # location -> [Node] (atomic accesses)
         self.NALocs = {}            # location -> [Node] (nonatomic accesses)
         self.threads_history = {}   # thread_id -> [Node] (events in thread)
-        self.races = []
+        self.races : List[DataRace] = []
         self.sc_fences = {}         # thread_id -> [Node] (sc fences per thread)
         self.release_fences = {}    # thread_id -> [Node] (release fences per thread)
         self.acquire_fences = {}    # thread_id -> [Node] (acquire fences per thread)
@@ -312,12 +324,5 @@ class ExecutionState:
                 # check if node hb prev (not possible in trace order usually)
                 if node.event_id in prev.hb_reachable: continue
                 
-                race = (prev, node)
+                race = DataRace(a=prev, b=node)
                 self.races.append(race)
-
-    def report(self):
-        if not self.races:
-            print("No data races detected.")
-        else:
-            unique_locations = set(r[0].location for r in self.races) 
-            print(f"Total data races in {len(unique_locations)} locations:\n {", ".join(unique_locations)}")

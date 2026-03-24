@@ -12,6 +12,7 @@ void* thread_func(void* arg) {
     int thread_id = *((int*)arg);
     
     for (int i = 0; i < ITERATIONS; i++) {
+        atomic_fetch_add_explicit(&shared_counter, 1, memory_order_acq_rel);
         atomic_fetch_add_explicit(&shared_counter, 1, memory_order_relaxed);
     }
     

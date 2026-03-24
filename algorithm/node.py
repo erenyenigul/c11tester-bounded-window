@@ -77,5 +77,10 @@ class Node:
     def is_relaxed(self):
         return is_relaxed(self.memory_order)
 
+    def __eq__(self, other):
+        if not isinstance(other, Node):
+            return NotImplemented
+        return self.event_id == other.event_id
+
     def __repr__(self):
         return f"Node({self.event_id}, T{self.thread}, {self.action}, {self.memory_order}, {self.location}, {self.value})"

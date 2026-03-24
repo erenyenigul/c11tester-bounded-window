@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Dict
 
 from algorithm.node import Node
@@ -6,14 +6,12 @@ from algorithm.prune import NoPruningStrategy
 
 @dataclass
 class DataRace:
-    location: str
     a: Node
     b: Node
+    location: str = field(init=False)
 
-    def __init__(self, a, b):
-        self.a = a
-        self.b = b
-        self.location = a.location
+    def __post_init__(self):
+        self.location = self.a.location
 
 # this class represents the overall execution state and implements the race detection algorithm
 class ExecutionState:

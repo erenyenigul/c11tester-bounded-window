@@ -162,4 +162,4 @@ class AggressivePruningStrategy:
         self.window_size = window_size
 
     def prune(self, state):
-        pass
+        return False

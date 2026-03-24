@@ -1,6 +1,6 @@
 class NoPruningStrategy:
     def prune(self, state):
-        return False
+        return
 
 
 class ConservativePruningStrategy:
@@ -152,4 +152,4 @@ class AggressivePruningStrategy:
         """
         Not implemented yet.
         """
-        return False
+        return

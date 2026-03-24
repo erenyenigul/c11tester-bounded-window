@@ -53,7 +53,7 @@ chmod +x c11_bounded_window.sh
 ./c11_bounded_window.sh
 ```
 
-Individual steps can be selected with flags (default: all steps run):
+Individual steps can be selected with flags. By default, all steps except `--graphs` run when no flags are provided (graphs are skipped unless `--graphs` is passed):
 ```shell
 ./c11_bounded_window.sh [--docker] [--parse] [--graphs] [--detect]
 ```

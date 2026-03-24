@@ -4,7 +4,7 @@
 # Run FROM THE PROJECT ROOT on your host machine.
 #
 # Usage: ./c11_bounded_window.sh [--docker] [--parse] [--graphs] [--detect]
-# If no flags are given, all steps run.
+# If no flags are given, all steps except graph generation run by default (enable with --graphs).
 
 set -e
 export PYTHONPATH=$PYTHONPATH:.

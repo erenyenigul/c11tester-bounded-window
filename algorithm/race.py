@@ -42,7 +42,7 @@ def detect_from_single_execution(filepath: str, pruning_strategy) -> SingleExecu
 def detect_from_multiple_executions(execution_dir, pruning_strategy) -> ProgramRaceSummary:
     execution_files = sorted(
         f for f in os.listdir(execution_dir)
-        if f.startswith("execution_") and f.endswith(".json")
+        if f.startswith("execution_") and f.endswith(".json") and not f.endswith("_graph.json")
     )
 
     total_races = 0

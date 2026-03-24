@@ -1,3 +1,4 @@
+from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import List, Dict
 
@@ -16,15 +17,15 @@ class DataRace:
 # this class represents the overall execution state and implements the race detection algorithm
 class ExecutionState:
     def __init__(self, pruning_strategy=None):
-        self.nodes: Dict[int, Node] = {}             # event_id -> Node (mapping of all events)
-        self.ALocs = {}             # location -> [Node] (atomic accesses)
-        self.NALocs = {}            # location -> [Node] (nonatomic accesses)
-        self.threads_history = {}   # thread_id -> [Node] (events in thread)
-        self.races : List[DataRace] = []
-        self.sc_fences = {}         # thread_id -> [Node] (sc fences per thread)
-        self.release_fences = {}    # thread_id -> [Node] (release fences per thread)
-        self.acquire_fences = {}    # thread_id -> [Node] (acquire fences per thread)
-        self.sc_stores = {}         # location -> [Node] (seq_cst stores per location)
+        self.nodes: Dict[int, Node] = {}
+        self.ALocs: defaultdict[str, List[Node]] = defaultdict(list)   # location -> [Node] (atomic accesses)
+        self.NALocs: defaultdict[str, List[Node]] = defaultdict(list)  # location -> [Node] (nonatomic accesses)
+        self.threads_history: defaultdict[int, List[Node]] = defaultdict(list)  # thread_id -> [Node]
+        self.races: List[DataRace] = []
+        self.sc_fences: defaultdict[int, List[Node]] = defaultdict(list)      # thread_id -> [Node]
+        self.release_fences: defaultdict[int, List[Node]] = defaultdict(list) # thread_id -> [Node]
+        self.acquire_fences: defaultdict[int, List[Node]] = defaultdict(list) # thread_id -> [Node]
+        self.sc_stores: defaultdict[str, List[Node]] = defaultdict(list)      # location -> [Node]
         self.pruning_strategy : PruningStrategy = NoPruningStrategy() if pruning_strategy is None else pruning_strategy
 
     def get_last_sc_fence(self, thread_id):
@@ -199,7 +200,7 @@ class ExecutionState:
     def add_node(self, node):
         self.nodes[node.event_id] = node
         # update thread history for po edges
-        self.threads_history.setdefault(node.thread, []).append(node) 
+        self.threads_history[node.thread].append(node)
         
         # 1. compute hb incrementally
         if len(self.threads_history[node.thread]) > 1:
@@ -284,20 +285,20 @@ class ExecutionState:
         # 4. update sc/fence state
         if node.is_fence():
             if node.is_release():
-                self.release_fences.setdefault(node.thread, []).append(node)
+                self.release_fences[node.thread].append(node)
             if node.is_acquire():
-                self.acquire_fences.setdefault(node.thread, []).append(node)
+                self.acquire_fences[node.thread].append(node)
             if node.is_sc():
-                self.sc_fences.setdefault(node.thread, []).append(node)
+                self.sc_fences[node.thread].append(node)
         
         if node.is_sc() and node.is_store():
-            self.sc_stores.setdefault(node.location, []).append(node)
+            self.sc_stores[node.location].append(node)
 
         # 5. update location history
         if node.is_atomic():
-            self.ALocs.setdefault(node.location, []).append(node)
+            self.ALocs[node.location].append(node)
         else:
-            self.NALocs.setdefault(node.location, []).append(node)
+            self.NALocs[node.location].append(node)
 
         self.pruning_strategy.step(self)
 

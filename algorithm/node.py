@@ -22,34 +22,11 @@ class Node:
     
     # parse cv string into a dictionary
     def parse_cv(self, cv_str):
-        if not cv_str:
-            return {}
-        if isinstance(cv_str, dict):
-            return cv_str
-        
-        import re
-        # c11tester might have multiple () groups; the clock vector is usually the last one
-        matches = re.findall(r'\((.*?)\)', cv_str)
-        if not matches:
-            return {}
-        
-        # take the last matched group
-        inner = matches[-1]
-        
-        # c11tester cvs are usually space-separated, but we handle commas too
-        # we also filter out anything that isn't a digit
-        parts = []
-        for x in re.split(r'[\s,]+', inner):
-            x = x.strip()
-            if x.isdigit():
-                parts.append(int(x))
-            elif x:
-                # if it's not a pure digit, try to find the digit part (e.g., '13b' -> 13)
-                digit_match = re.search(r'\d+', x)
-                if digit_match:
-                    parts.append(int(digit_match.group()))
-        
-        return {i+1: val for i, val in enumerate(parts)}
+        if cv_str:
+            cv_dict = ClockVector({i: val for i, val in enumerate(cv_str)})
+        else:
+            cv_dict = ClockVector(None)
+        return cv_dict
 
     def is_atomic(self):
         return is_atomic(self.action, self.memory_order)

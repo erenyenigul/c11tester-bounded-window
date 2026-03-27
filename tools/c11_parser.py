@@ -94,6 +94,7 @@ def parse_trace(trace_text, exec_id):
                 raise ValueError(f"Unknown memory order: {parts[i]}")
             i += 1
 
+            # 6. Once we hit the memory order, the next two parts are always the location and value
             location = parts[i]
             value = parts[i + 1]
 

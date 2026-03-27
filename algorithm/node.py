@@ -3,7 +3,7 @@ from algorithm.clockvector import ClockVector
 
 # this class represents a single event in the execution trace, along with its relations and metadata
 class Node:
-    def __init__(self, event_id, thread, action, memory_order, location, value, rf=None, cv=None):
+    def __init__(self, event_id, thread, action, memory_order, location, value, mo=None, rf=None, cv=None):
         # taken from the JSON event data
         self.event_id = event_id
         self.thread = thread
@@ -11,6 +11,7 @@ class Node:
         self.memory_order = memory_order.lower()
         self.location = location
         self.value = value
+        self.mo = mo
         self.rf = rf
         self.cv_provided = self.parse_cv(cv)
         

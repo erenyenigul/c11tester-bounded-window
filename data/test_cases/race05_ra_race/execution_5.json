@@ -8,58 +8,84 @@
       "memory_order": "relaxed",
       "location": "initial",
       "value": "0",
+      "mo": null,
       "rf": null,
-      "cv": "( 0)"
+      "cv": [
+        0
+      ]
     },
     {
       "event_id": 1,
       "thread": 1,
       "action": "thread start",
       "memory_order": "seq_cst",
-      "location": "00002AAAB95CC110",
+      "location": "00007E82722E3110",
       "value": "0xdeadbeef",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  1)"
+      "cv": [
+        0,
+        1
+      ]
     },
     {
       "event_id": 2,
       "thread": 1,
       "action": "pthread create",
       "memory_order": "seq_cst",
-      "location": "00002AAAAB2ABC20",
-      "value": "0x2aaaab2abba0",
+      "location": "00007FFD7F80E4F0",
+      "value": "0x7ffd7f80e470",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2)"
+      "cv": [
+        0,
+        2
+      ]
     },
     {
       "event_id": 3,
       "thread": 2,
       "action": "thread start",
       "memory_order": "seq_cst",
-      "location": "00002AAABAD4DA98",
+      "location": "00007E8273A64A98",
       "value": "0xdeadbeef",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2,  3)"
+      "cv": [
+        0,
+        2,
+        3
+      ]
     },
     {
       "event_id": 4,
       "thread": 1,
       "action": "pthread create",
       "memory_order": "seq_cst",
-      "location": "00002AAAAB2ABC18",
-      "value": "0x2aaaab2abba0",
+      "location": "00007FFD7F80E4E8",
+      "value": "0x7ffd7f80e470",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4)"
+      "cv": [
+        0,
+        4
+      ]
     },
     {
       "event_id": 5,
       "thread": 3,
       "action": "thread start",
       "memory_order": "seq_cst",
-      "location": "00002AAABAF4F058",
+      "location": "00007E8273C66058",
       "value": "0xdeadbeef",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0,  5)"
+      "cv": [
+        0,
+        4,
+        0,
+        5
+      ]
     },
     {
       "event_id": 6,
@@ -68,8 +94,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x1",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2,  6)"
+      "cv": [
+        0,
+        2,
+        6
+      ]
     },
     {
       "event_id": 7,
@@ -78,8 +109,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x2",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2,  7)"
+      "cv": [
+        0,
+        2,
+        7
+      ]
     },
     {
       "event_id": 8,
@@ -88,8 +124,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x3",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2,  8)"
+      "cv": [
+        0,
+        2,
+        8
+      ]
     },
     {
       "event_id": 9,
@@ -98,8 +139,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x4",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2,  9)"
+      "cv": [
+        0,
+        2,
+        9
+      ]
     },
     {
       "event_id": 10,
@@ -108,8 +154,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x5",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 10)"
+      "cv": [
+        0,
+        2,
+        10
+      ]
     },
     {
       "event_id": 11,
@@ -118,8 +169,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x6",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 11)"
+      "cv": [
+        0,
+        2,
+        11
+      ]
     },
     {
       "event_id": 12,
@@ -128,8 +184,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x7",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 12)"
+      "cv": [
+        0,
+        2,
+        12
+      ]
     },
     {
       "event_id": 13,
@@ -138,8 +199,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x8",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 13)"
+      "cv": [
+        0,
+        2,
+        13
+      ]
     },
     {
       "event_id": 14,
@@ -148,8 +214,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x9",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 14)"
+      "cv": [
+        0,
+        2,
+        14
+      ]
     },
     {
       "event_id": 15,
@@ -158,8 +229,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0xa",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 15)"
+      "cv": [
+        0,
+        2,
+        15
+      ]
     },
     {
       "event_id": 16,
@@ -168,8 +244,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0xb",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 16)"
+      "cv": [
+        0,
+        2,
+        16
+      ]
     },
     {
       "event_id": 17,
@@ -178,8 +259,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0xc",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 17)"
+      "cv": [
+        0,
+        2,
+        17
+      ]
     },
     {
       "event_id": 18,
@@ -188,8 +274,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0xd",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 18)"
+      "cv": [
+        0,
+        2,
+        18
+      ]
     },
     {
       "event_id": 19,
@@ -198,8 +289,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0xe",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 19)"
+      "cv": [
+        0,
+        2,
+        19
+      ]
     },
     {
       "event_id": 20,
@@ -208,8 +304,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0xf",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 20)"
+      "cv": [
+        0,
+        2,
+        20
+      ]
     },
     {
       "event_id": 21,
@@ -218,8 +319,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x10",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 21)"
+      "cv": [
+        0,
+        2,
+        21
+      ]
     },
     {
       "event_id": 22,
@@ -228,8 +334,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x11",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 22)"
+      "cv": [
+        0,
+        2,
+        22
+      ]
     },
     {
       "event_id": 23,
@@ -238,8 +349,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x12",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 23)"
+      "cv": [
+        0,
+        2,
+        23
+      ]
     },
     {
       "event_id": 24,
@@ -248,8 +364,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x13",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 24)"
+      "cv": [
+        0,
+        2,
+        24
+      ]
     },
     {
       "event_id": 25,
@@ -258,8 +379,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x14",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 25)"
+      "cv": [
+        0,
+        2,
+        25
+      ]
     },
     {
       "event_id": 26,
@@ -268,8 +394,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x15",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 26)"
+      "cv": [
+        0,
+        2,
+        26
+      ]
     },
     {
       "event_id": 27,
@@ -278,8 +409,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x16",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 27)"
+      "cv": [
+        0,
+        2,
+        27
+      ]
     },
     {
       "event_id": 28,
@@ -288,8 +424,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x17",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 28)"
+      "cv": [
+        0,
+        2,
+        28
+      ]
     },
     {
       "event_id": 29,
@@ -298,8 +439,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x18",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 29)"
+      "cv": [
+        0,
+        2,
+        29
+      ]
     },
     {
       "event_id": 30,
@@ -308,8 +454,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x19",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 30)"
+      "cv": [
+        0,
+        2,
+        30
+      ]
     },
     {
       "event_id": 31,
@@ -318,8 +469,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x1a",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 31)"
+      "cv": [
+        0,
+        2,
+        31
+      ]
     },
     {
       "event_id": 32,
@@ -328,8 +484,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x1b",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 32)"
+      "cv": [
+        0,
+        2,
+        32
+      ]
     },
     {
       "event_id": 33,
@@ -338,8 +499,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x1c",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 33)"
+      "cv": [
+        0,
+        2,
+        33
+      ]
     },
     {
       "event_id": 34,
@@ -348,8 +514,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x1d",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 34)"
+      "cv": [
+        0,
+        2,
+        34
+      ]
     },
     {
       "event_id": 35,
@@ -358,8 +529,13 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x1e",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 35)"
+      "cv": [
+        0,
+        2,
+        35
+      ]
     },
     {
       "event_id": 36,
@@ -368,18 +544,28 @@
       "memory_order": "release",
       "location": "0000000000404068",
       "value": "0x1",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 36)"
+      "cv": [
+        0,
+        2,
+        36
+      ]
     },
     {
       "event_id": 37,
       "thread": 2,
       "action": "thread finish",
       "memory_order": "seq_cst",
-      "location": "00002AAABAD4DA98",
+      "location": "00007E8273A64A98",
       "value": "0xdeadbeef",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  2, 37)"
+      "cv": [
+        0,
+        2,
+        37
+      ]
     },
     {
       "event_id": 38,
@@ -388,8 +574,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x1f",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 38)"
+      "cv": [
+        0,
+        4,
+        0,
+        38
+      ]
     },
     {
       "event_id": 39,
@@ -398,8 +590,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x20",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 39)"
+      "cv": [
+        0,
+        4,
+        0,
+        39
+      ]
     },
     {
       "event_id": 40,
@@ -408,8 +606,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x21",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 40)"
+      "cv": [
+        0,
+        4,
+        0,
+        40
+      ]
     },
     {
       "event_id": 41,
@@ -418,8 +622,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x22",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 41)"
+      "cv": [
+        0,
+        4,
+        0,
+        41
+      ]
     },
     {
       "event_id": 42,
@@ -428,8 +638,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x23",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 42)"
+      "cv": [
+        0,
+        4,
+        0,
+        42
+      ]
     },
     {
       "event_id": 43,
@@ -438,8 +654,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x24",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 43)"
+      "cv": [
+        0,
+        4,
+        0,
+        43
+      ]
     },
     {
       "event_id": 44,
@@ -448,8 +670,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x25",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 44)"
+      "cv": [
+        0,
+        4,
+        0,
+        44
+      ]
     },
     {
       "event_id": 45,
@@ -458,8 +686,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x26",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 45)"
+      "cv": [
+        0,
+        4,
+        0,
+        45
+      ]
     },
     {
       "event_id": 46,
@@ -468,8 +702,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x27",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 46)"
+      "cv": [
+        0,
+        4,
+        0,
+        46
+      ]
     },
     {
       "event_id": 47,
@@ -478,8 +718,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x28",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 47)"
+      "cv": [
+        0,
+        4,
+        0,
+        47
+      ]
     },
     {
       "event_id": 48,
@@ -488,8 +734,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x29",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 48)"
+      "cv": [
+        0,
+        4,
+        0,
+        48
+      ]
     },
     {
       "event_id": 49,
@@ -498,8 +750,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x2a",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 49)"
+      "cv": [
+        0,
+        4,
+        0,
+        49
+      ]
     },
     {
       "event_id": 50,
@@ -508,8 +766,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x2b",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 50)"
+      "cv": [
+        0,
+        4,
+        0,
+        50
+      ]
     },
     {
       "event_id": 51,
@@ -518,8 +782,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x2c",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 51)"
+      "cv": [
+        0,
+        4,
+        0,
+        51
+      ]
     },
     {
       "event_id": 52,
@@ -528,8 +798,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x2d",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 52)"
+      "cv": [
+        0,
+        4,
+        0,
+        52
+      ]
     },
     {
       "event_id": 53,
@@ -538,8 +814,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x2e",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 53)"
+      "cv": [
+        0,
+        4,
+        0,
+        53
+      ]
     },
     {
       "event_id": 54,
@@ -548,8 +830,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x2f",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 54)"
+      "cv": [
+        0,
+        4,
+        0,
+        54
+      ]
     },
     {
       "event_id": 55,
@@ -558,8 +846,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x30",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 55)"
+      "cv": [
+        0,
+        4,
+        0,
+        55
+      ]
     },
     {
       "event_id": 56,
@@ -568,8 +862,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x31",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 56)"
+      "cv": [
+        0,
+        4,
+        0,
+        56
+      ]
     },
     {
       "event_id": 57,
@@ -578,8 +878,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x32",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 57)"
+      "cv": [
+        0,
+        4,
+        0,
+        57
+      ]
     },
     {
       "event_id": 58,
@@ -588,8 +894,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x33",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 58)"
+      "cv": [
+        0,
+        4,
+        0,
+        58
+      ]
     },
     {
       "event_id": 59,
@@ -598,8 +910,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x34",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 59)"
+      "cv": [
+        0,
+        4,
+        0,
+        59
+      ]
     },
     {
       "event_id": 60,
@@ -608,8 +926,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x35",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 60)"
+      "cv": [
+        0,
+        4,
+        0,
+        60
+      ]
     },
     {
       "event_id": 61,
@@ -618,8 +942,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x36",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 61)"
+      "cv": [
+        0,
+        4,
+        0,
+        61
+      ]
     },
     {
       "event_id": 62,
@@ -628,8 +958,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x37",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 62)"
+      "cv": [
+        0,
+        4,
+        0,
+        62
+      ]
     },
     {
       "event_id": 63,
@@ -638,8 +974,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x38",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 63)"
+      "cv": [
+        0,
+        4,
+        0,
+        63
+      ]
     },
     {
       "event_id": 64,
@@ -648,8 +990,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x39",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 64)"
+      "cv": [
+        0,
+        4,
+        0,
+        64
+      ]
     },
     {
       "event_id": 65,
@@ -658,8 +1006,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x3a",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 65)"
+      "cv": [
+        0,
+        4,
+        0,
+        65
+      ]
     },
     {
       "event_id": 66,
@@ -668,8 +1022,14 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x3b",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 66)"
+      "cv": [
+        0,
+        4,
+        0,
+        66
+      ]
     },
     {
       "event_id": 67,
@@ -678,48 +1038,77 @@
       "memory_order": "release",
       "location": "0000000000404064",
       "value": "0x3c",
+      "mo": null,
       "rf": null,
-      "cv": "( 0,  4,  0, 67)"
+      "cv": [
+        0,
+        4,
+        0,
+        67
+      ]
     },
     {
       "event_id": 68,
+      "thread": 1,
+      "action": "pthread join",
+      "memory_order": "seq_cst",
+      "location": "00007E8273A64A98",
+      "value": "0x2",
+      "mo": null,
+      "rf": null,
+      "cv": [
+        0,
+        68,
+        37
+      ]
+    },
+    {
+      "event_id": 69,
       "thread": 3,
       "action": "atomic read",
       "memory_order": "relaxed",
       "location": "0000000000404068",
       "value": "0x1",
+      "mo": null,
       "rf": 36,
-      "cv": "( 0,  4,  0, 68)"
-    },
-    {
-      "event_id": 69,
-      "thread": 3,
-      "action": "thread finish",
-      "memory_order": "seq_cst",
-      "location": "00002AAABAF4F058",
-      "value": "0xdeadbeef",
-      "rf": null,
-      "cv": "( 0,  4,  0, 69)"
+      "cv": [
+        0,
+        4,
+        0,
+        69
+      ]
     },
     {
       "event_id": 70,
-      "thread": 1,
-      "action": "pthread join",
+      "thread": 3,
+      "action": "thread finish",
       "memory_order": "seq_cst",
-      "location": "00002AAABAD4DA98",
-      "value": "0x2",
+      "location": "00007E8273C66058",
+      "value": "0xdeadbeef",
+      "mo": null,
       "rf": null,
-      "cv": "( 0, 70, 37)"
+      "cv": [
+        0,
+        4,
+        0,
+        70
+      ]
     },
     {
       "event_id": 71,
       "thread": 1,
       "action": "pthread join",
       "memory_order": "seq_cst",
-      "location": "00002AAABAF4F058",
+      "location": "00007E8273C66058",
       "value": "0x3",
+      "mo": null,
       "rf": null,
-      "cv": "( 0, 71, 37, 69)"
+      "cv": [
+        0,
+        71,
+        37,
+        70
+      ]
     },
     {
       "event_id": 72,
@@ -727,19 +1116,31 @@
       "action": "atomic read",
       "memory_order": "acquire",
       "location": "0000000000404064",
-      "value": "0x3c",
-      "rf": 67,
-      "cv": "( 0, 72, 37, 69)"
+      "value": "0x1e",
+      "mo": null,
+      "rf": 35,
+      "cv": [
+        0,
+        72,
+        37,
+        70
+      ]
     },
     {
       "event_id": 73,
       "thread": 1,
       "action": "thread finish",
       "memory_order": "seq_cst",
-      "location": "00002AAAB95CC110",
+      "location": "00007E82722E3110",
       "value": "0xdeadbeef",
+      "mo": null,
       "rf": null,
-      "cv": "( 0, 73, 37, 69)"
+      "cv": [
+        0,
+        73,
+        37,
+        70
+      ]
     }
   ]
 }

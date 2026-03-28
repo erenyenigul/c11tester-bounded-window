@@ -1,7 +1,7 @@
 """
 Validate our computed HB clock vectors against C11Tester's ground-truth CVs.
 
-cv_provided uses 1-based thread indexing: cv_provided[t+1] corresponds to thread t.
+cv_provided uses 0-based thread indexing: cv_provided[t] corresponds to thread t.
 Our node.cv uses 0-based: cv.get(t) is the max event_id seen from thread t.
 
 The sound property to assert is that our CV never exceeds C11Tester's CV —
@@ -18,10 +18,6 @@ from algorithm.prune import NoPruningStrategy
 
 TEST_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "test_cases")
 
-def provided_as_zero_indexed(node):
-    """Convert cv_provided {1: epoch, 2: epoch, ...} to {0: epoch, 1: epoch, ...}."""
-    return {t - 1: epoch for t, epoch in node.cv_provided.items()}
-
 class TestClockVectors(unittest.TestCase):
 
     def _check_execution(self, filepath):
@@ -29,7 +25,7 @@ class TestClockVectors(unittest.TestCase):
         for node in result.state.nodes.values():
             if not node.cv_provided:
                 continue
-            provided = provided_as_zero_indexed(node)
+            provided = node.cv_provided._cv
             for thread, provided_epoch in provided.items():
                 our_epoch = node.cv.get(thread)
                 self.assertLessEqual(

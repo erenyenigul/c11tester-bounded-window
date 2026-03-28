@@ -2,14 +2,26 @@ import json
 import re
 import os
 import sys
+from enum import Enum
+
+# All possible memory orders in C11, according to the paper's Section 2
+class MemoryOrder(str, Enum):
+    RELAXED = "relaxed"
+    ACQUIRE = "acquire"
+    RELEASE = "release"
+    ACQ_REL = "acq_rel"
+    SEQ_CST = "seq_cst"
+    CONSUME = "consume" # Note: Section 2 claims that consume is not supported by C11Tester, but I will include it for completeness
+MO_VALUES = {mo.value for mo in MemoryOrder}
 
 def split_executions(text):
     parts = re.split(r'Execution trace \d+:', text)
-    return parts[1:] # ignores initial unneccessary header
+    return parts[1:]
 
 def parse_trace(trace_text, exec_id):
     events = []
-    # always add initial state event (ID 0) as a starting point
+
+    # Initial synthetic event
     events.append({
         "event_id": 0,
         "thread": 0,
@@ -17,61 +29,83 @@ def parse_trace(trace_text, exec_id):
         "memory_order": "relaxed",
         "location": "initial",
         "value": "0",
+        "mo": None,
         "rf": None,
-        "cv": "( 0)"
+        "cv": [0]
     })
-    
+
     lines = trace_text.splitlines()
 
     for line in lines:
         line = line.strip()
+        
+        # Skip all lines until I hit the first event and end parsing when I hit the "HASH" line
         if not line or line.startswith('-') or line.startswith('#'):
             continue
-
         if line.startswith("HASH"):
             break
 
         try:
-            # 1. Extract CV (might be multiple sets of parentheses, CV is the last)
-            # Find all groups in parentheses
-            all_cv_matches = re.findall(r'\(.*?\)', line)
-            cv = " ".join(all_cv_matches) if all_cv_matches else None
+            # 1. Extract CV (LAST parentheses) and remove it from line
+            cv_match = re.search(r'\(([^()]*)\)\s*$', line)
+            if not cv_match:
+                continue
 
-            # Remove all CV groups from line to get the clean action part
-            line_no_cv = line
-            for match in all_cv_matches:
-                line_no_cv = line_no_cv.replace(match, "").strip()
+            cv_raw = cv_match.group(1)
+            cv = [int(x.strip()) for x in cv_raw.split(',') if x.strip()]
 
-            # 2. Split the remaining part
-            parts = re.split(r'\s+', line_no_cv)
+            line = line[:cv_match.start()].strip()
 
+            # 2. Extract mo_index (the only parenthesized element left, if it exists) 
+            mo = None
+            mo_match = re.search(r'\(([^()]*)\)', line)
+            if mo_match:
+                mo_str = mo_match.group(1).strip()
+                # mo_index is a hexadecimal number, but I will store it as an integer (for easier use as an index later)
+                try:
+                    mo = int(mo_str, 16)
+                except ValueError:
+                    mo = int(mo_str)
+                line = line[:mo_match.start()] + line[mo_match.end():]
+                line = line.strip()
+
+            # 3. Extract rf (the last number in the line now, if it exists)
+            parts = line.split()
+            rf = None
+            if parts and parts[-1].isdigit():
+                rf = int(parts[-1])
+                parts = parts[:-1]
+
+            # 4. Parse event_id and thread_id (always the first two numbers in the line)
             event_id = int(parts[0])
             thread = int(parts[1])
 
-            # 3. handle multi-word action
-            if parts[2] == "thread" or parts[2] == "atomic" or parts[2] == "pthread":
-                action = parts[2] + " " + parts[3]
-                memory_order = parts[4]
-                idx = 5
-            else:
-                action = parts[2]
-                memory_order = parts[3]
-                idx = 4
-            location = parts[idx]
-            value = parts[idx + 1]
+            # 5. Parse action which can be multiple words, so keep consuming parts until we hit a memory order keyword
+            action_parts = []
+            i = 2
+            while i < len(parts) and parts[i] not in MO_VALUES:
+                action_parts.append(parts[i])
+                i += 1
 
-            # 4. rf is optional
-            rf = None
-            if len(parts) > idx + 2 and parts[idx + 2].isdigit():
-                rf = int(parts[idx + 2])
+            action = " ".join(action_parts)
+            try:
+                memory_order = MemoryOrder(parts[i])
+            except ValueError:
+                raise ValueError(f"Unknown memory order: {parts[i]}")
+            i += 1
+
+            # 6. Once we hit the memory order, the next two parts are always the location and value
+            location = parts[i]
+            value = parts[i + 1]
 
             event = {
                 "event_id": event_id,
                 "thread": thread,
                 "action": action,
-                "memory_order": memory_order,
+                "memory_order": memory_order.value,
                 "location": location,
                 "value": value,
+                "mo": mo,
                 "rf": rf,
                 "cv": cv
             }
@@ -113,6 +147,6 @@ if __name__ == "__main__":
     if os.path.exists(input_file):
         parse_file(input_file, output_dir)
     else:
-        print(f"Warning: {input_file} not found in {output_dir}")
+        print(f"Error: {input_file} not found in {output_dir}")
 
     print(f"Finished parsing at {output_dir}")

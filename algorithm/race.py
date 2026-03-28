@@ -32,6 +32,7 @@ def detect_from_single_execution(filepath: str, pruning_strategy) -> SingleExecu
             memory_order=event_data["memory_order"],
             location=event_data["location"],
             value=event_data["value"],
+            mo=event_data.get("mo"),
             rf=event_data.get("rf"),
             cv=event_data.get("cv"),
         )

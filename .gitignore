@@ -1,4 +1,5 @@
 data/parsed/
+data/raw/
 data/graphs/
 */__pycache__/
 *.pyc

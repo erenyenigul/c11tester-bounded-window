@@ -53,10 +53,16 @@ chmod +x c11_bounded_window.sh
 ./c11_bounded_window.sh
 ```
 
+Individual steps can be selected with flags. By default, all steps except `--graphs` run when no flags are provided (graphs are skipped unless `--graphs` is passed):
+```shell
+./c11_bounded_window.sh [--docker] [--parse] [--graphs] [--detect]
+```
+
 This will:
-1.  **Step 1:** Run `tools/run_analysis.sh` **via Docker** (mounting current directory to `/analysis`).
-2.  **Step 2:** Run `tools/graph_generator.py` (locally on host) on all parsed programs in `data/parsed/`.
-3.  **Step 3:** Run `tools/race_detector.py` (locally on host) on every execution trace found.
+1.  **`--docker`:** Run `tools/run_c11tester.sh` **via Docker**, writing raw traces to `data/raw/`.
+2.  **`--parse`:** Run `tools/c11_parser.py` on raw traces, producing JSON in `data/parsed/`.
+3.  **`--graphs`:** Run `tools/graph_generator.py` on all programs in `data/parsed/`.
+4.  **`--detect`:** Run `tools/race_detector.py` on every execution trace found.
 
 ---
 
@@ -70,9 +76,9 @@ Step 1 requires the C11Tester environment, provided via a Docker container.
 ### Running Manually
 If you wish to run only the trace analysis manually, pick your test suite (`bounded` for our custom tests, or `c11tester` for the original C11Tester suite) and run:
 ```shell
-docker run --rm -v "$(pwd):/analysis" pcp:latest /analysis/tools/run_analysis.sh {bounded, c11tester}
+docker run --rm -v "$(pwd):/analysis" pcp:latest bash /analysis/tools/run_c11tester.sh {bounded, c11tester}
 ```
-This script compiles target programs, runs them with `-verbose=2`, and generates structured JSON in `data/parsed/`.
+This script compiles target programs, runs them with `-verbose=2`, and writes raw output to `data/raw/`.
 
 ---
 

@@ -1,17 +1,32 @@
+from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import List, Dict
+
 from algorithm.node import Node
+from algorithm.prune import NoPruningStrategy, PruningStrategy
+
+@dataclass
+class DataRace:
+    a: Node
+    b: Node
+    location: str = field(init=False)
+
+    def __post_init__(self):
+        self.location = self.a.location
 
 # this class represents the overall execution state and implements the race detection algorithm
 class ExecutionState:
-    def __init__(self):
-        self.nodes = {}             # event_id -> Node (mapping of all events)
-        self.ALocs = {}             # location -> [Node] (atomic accesses)
-        self.NALocs = {}            # location -> [Node] (nonatomic accesses)
-        self.threads_history = {}   # thread_id -> [Node] (events in thread)
-        self.races = []
-        self.sc_fences = {}         # thread_id -> [Node] (sc fences per thread)
-        self.release_fences = {}    # thread_id -> [Node] (release fences per thread)
-        self.acquire_fences = {}    # thread_id -> [Node] (acquire fences per thread)
-        self.sc_stores = {}         # location -> [Node] (seq_cst stores per location)
+    def __init__(self, pruning_strategy=None):
+        self.nodes: Dict[int, Node] = {}
+        self.ALocs: defaultdict[str, List[Node]] = defaultdict(list)   # location -> [Node] (atomic accesses)
+        self.NALocs: defaultdict[str, List[Node]] = defaultdict(list)  # location -> [Node] (nonatomic accesses)
+        self.threads_history: defaultdict[int, List[Node]] = defaultdict(list)  # thread_id -> [Node]
+        self.races: List[DataRace] = []
+        self.sc_fences: defaultdict[int, List[Node]] = defaultdict(list)      # thread_id -> [Node]
+        self.release_fences: defaultdict[int, List[Node]] = defaultdict(list) # thread_id -> [Node]
+        self.acquire_fences: defaultdict[int, List[Node]] = defaultdict(list) # thread_id -> [Node]
+        self.sc_stores: defaultdict[str, List[Node]] = defaultdict(list)      # location -> [Node]
+        self.pruning_strategy : PruningStrategy = NoPruningStrategy() if pruning_strategy is None else pruning_strategy
 
     def get_last_sc_fence(self, thread_id):
         fences = self.sc_fences.get(thread_id, [])
@@ -29,12 +44,15 @@ class ExecutionState:
         fences = self.acquire_fences.get(thread_id, [])
         return fences[-1] if fences else None
     
-    # check if u_id happens before v_id using the hb_reachable sets
+    # check if u_id happens before v_id using clock vectors
     def hb(self, u_id, v_id):
-        if u_id == v_id: return True
+        if u_id == v_id:
+            return True
+        u = self.nodes.get(u_id)
         v = self.nodes.get(v_id)
-        if not v: return False
-        return u_id in v.hb_reachable
+        if not u or not v:
+            return False
+        return v.cv.get(u.thread) >= u.event_id
 
 
     # computes the WritePriorSet for a store s is the set of stores
@@ -182,14 +200,13 @@ class ExecutionState:
     def add_node(self, node):
         self.nodes[node.event_id] = node
         # update thread history for po edges
-        self.threads_history.setdefault(node.thread, []).append(node) 
+        self.threads_history[node.thread].append(node)
         
         # 1. compute hb incrementally
         if len(self.threads_history[node.thread]) > 1:
             prev_sb = self.threads_history[node.thread][-2]
             node.sb_prior = prev_sb.event_id
-            node.hb_reachable.add(prev_sb.event_id)
-            node.hb_reachable.update(prev_sb.hb_reachable)
+            node.cv.merge(prev_sb.cv)
         
         if node.rf is not None:
             store_node = self.nodes.get(node.rf)
@@ -197,8 +214,7 @@ class ExecutionState:
                 # basic rf synchronization: store(release) -> load(acquire)
                 if node.is_acquire() and store_node.is_release():
                     node.sw_prior.append(store_node.event_id)
-                    node.hb_reachable.add(store_node.event_id)
-                    node.hb_reachable.update(store_node.hb_reachable)
+                    node.cv.merge(store_node.cv)
                 
                 # fence synchronization: release fence -> atomic store -> atomic load -> acquire fence
                 # if current node is an acquire load, it synchronizes with a release store if it reads from it.
@@ -207,11 +223,10 @@ class ExecutionState:
                     # for a load(acquire), it already synchronizes with a store(release) if it reads from it.
                     # but if it reads from any store, it might synchronize with a release fence before it.
                     last_rel_fence = self.get_last_release_fence(store_node.thread)
-                    if last_rel_fence and last_rel_fence.event_id in store_node.hb_reachable:
+                    if last_rel_fence and store_node.cv.get(last_rel_fence.thread) >= last_rel_fence.event_id:
                         # (rel-fence sb-> store) and (store rf-> load(acq)) -> sw edge from rel-fence to load(acq)
                         node.sw_prior.append(last_rel_fence.event_id)
-                        node.hb_reachable.add(last_rel_fence.event_id)
-                        node.hb_reachable.update(last_rel_fence.hb_reachable)
+                        node.cv.merge(last_rel_fence.cv)
                 
                 if node.is_load():
                     # if an acquire fence follows this load, the load must also happen-after the store.
@@ -230,45 +245,39 @@ class ExecutionState:
                          # actually, it's: (store(any) rf-> load) and (load sb-> acq-fence)
                          # AND (rel-fence sb-> store) -> rel-fence sw-> acq-fence.
                          last_rel_fence = self.get_last_release_fence(store_node.thread)
-                         if last_rel_fence and last_rel_fence.event_id in store_node.hb_reachable:
+                         if last_rel_fence and store_node.cv.get(last_rel_fence.thread) >= last_rel_fence.event_id:
                              node.sw_prior.append(last_rel_fence.event_id)
-                             node.hb_reachable.add(last_rel_fence.event_id)
-                             node.hb_reachable.update(last_rel_fence.hb_reachable)
-                         
+                             node.cv.merge(last_rel_fence.cv)
+
                          # (store(rel) rf-> load) and (load sb-> acq-fence) -> store(rel) sw-> acq-fence.
                          if store_node.is_release():
                              node.sw_prior.append(store_node.event_id)
-                             node.hb_reachable.add(store_node.event_id)
-                             node.hb_reachable.update(store_node.hb_reachable)
+                             node.cv.merge(store_node.cv)
 
         if node.action == "thread start":
             for n in self.nodes.values():
-                if n.action == "thread create" and n.location == node.location:
+                if (n.action == "thread create" or n.action == "pthread create") and n.location == node.location:
                     node.sw_prior.append(n.event_id)
-                    node.hb_reachable.add(n.event_id)
-                    node.hb_reachable.update(n.hb_reachable)
+                    node.cv.merge(n.cv)
 
         # 2. add priorset edges
         if node.is_atomic():
             if node.is_store():
                 pset = self.write_prior_set(node)
-                if pset:
-                    print(f"Node {node.event_id} (Store) adding priorset edges: {pset}")
+                #if pset:
+                #    print(f"Node {node.event_id} (Store) adding priorset edges: {pset}")
                 node.prior_set_edges.extend(list(pset))
                 for pid in pset:
-                    node.hb_reachable.add(pid)
-                    node.hb_reachable.update(self.nodes[pid].hb_reachable)
-            
+                    node.cv.merge(self.nodes[pid].cv)
+
             if node.is_load() and node.rf is not None:
                 store_node = self.nodes.get(node.rf)
                 if store_node:
                     pset, ok = self.read_prior_set(node, store_node)
                     if ok and pset:
-                        print(f"Node {node.event_id} (Load) adding priorset edges: {pset}")
                         node.prior_set_edges.extend(list(pset))
                         for pid in pset:
-                            node.hb_reachable.add(pid)
-                            node.hb_reachable.update(self.nodes[pid].hb_reachable)
+                            node.cv.merge(self.nodes[pid].cv)
 
         # 3. check for data races
         self.check_data_race(node)
@@ -276,38 +285,38 @@ class ExecutionState:
         # 4. update sc/fence state
         if node.is_fence():
             if node.is_release():
-                self.release_fences.setdefault(node.thread, []).append(node)
+                self.release_fences[node.thread].append(node)
             if node.is_acquire():
-                self.acquire_fences.setdefault(node.thread, []).append(node)
+                self.acquire_fences[node.thread].append(node)
             if node.is_sc():
-                self.sc_fences.setdefault(node.thread, []).append(node)
+                self.sc_fences[node.thread].append(node)
         
         if node.is_sc() and node.is_store():
-            self.sc_stores.setdefault(node.location, []).append(node)
+            self.sc_stores[node.location].append(node)
 
         # 5. update location history
         if node.is_atomic():
-            self.ALocs.setdefault(node.location, []).append(node)
+            self.ALocs[node.location].append(node)
         else:
-            self.NALocs.setdefault(node.location, []).append(node)
+            self.NALocs[node.location].append(node)
 
-    def check_data_race(self, node):
+        self.pruning_strategy.step(self)
+
+    def check_data_race(self, node: Node):
         # conflicts: same location, at least one write, at least one non-atomic
-        prev_accesses = self.ALocs.get(node.location, []) + self.NALocs.get(node.location, [])
+        prev_accesses : List[Node] = self.ALocs.get(node.location, []) + self.NALocs.get(node.location, [])
+        
         for prev in prev_accesses:
-            if node.is_atomic() and prev.is_atomic(): continue
+            if node.is_atomic() and prev.is_atomic():
+                # we ignore non-relaxed atomics
+                if not node.is_relaxed() and not prev.is_relaxed():
+                    continue
             if not node.is_store() and not prev.is_store(): continue
-            if prev.event_id not in node.hb_reachable:
+            if node.cv.get(prev.thread) < prev.event_id:
                 # potential race
                 # check if node hb prev (not possible in trace order usually)
-                if node.event_id in prev.hb_reachable: continue
+                if prev.cv.get(node.thread) >= node.event_id:
+                    continue
                 
-                race = (prev, node)
+                race = DataRace(a=prev, b=node)
                 self.races.append(race)
-                print(f"DATA RACE detected at {node.location}: Node {prev.event_id} and Node {node.event_id}")
-
-    def report(self):
-        if not self.races:
-            print("No data races detected.")
-        else:
-            print(f"Total data races: {len(self.races)}")

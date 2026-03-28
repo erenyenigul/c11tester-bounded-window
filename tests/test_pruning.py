@@ -10,16 +10,14 @@ from algorithm.prune import (
 
 TEST_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "test_cases")
 
-EQUIVALENT_STRATEGIES = [
-    ("no_pruning",      NoPruningStrategy()),
-    ("conservative",    ConservativePruningStrategy()),
+def make_equivalent_strategies():
+    return [
+        ("no_pruning",      NoPruningStrategy()),
+        ("conservative",    ConservativePruningStrategy()),
+        # Basically no pruning. Just to check that aggressive mode doesn't differ from no pruning when the window is large.
+        ("aggressive_1000", AggressivePruningStrategy(1000)),
+    ]
 
-    # Basically no pruning. Just to check that aggressive mode doesn't differ from no pruning when the window is large.
-    ("aggressive_1000", AggressivePruningStrategy(1000)), 
-]
-
-# Small window: aggressive pruning may miss races, but must never invent new ones.
-AGGRESSIVE_SMALL_WINDOW = AggressivePruningStrategy(10)
 
 class TestPruningEquivalence(unittest.TestCase):
 
@@ -31,7 +29,7 @@ class TestPruningEquivalence(unittest.TestCase):
             if not any(f.startswith("execution_") for f in os.listdir(path)):
                 continue
 
-            results = {label: detect_from_multiple_executions(path, s) for label, s in EQUIVALENT_STRATEGIES}
+            results = {label: detect_from_multiple_executions(path, s) for label, s in make_equivalent_strategies()}
             baseline_label, baseline = next(iter(results.items()))
 
             for label, result in results.items():
@@ -49,7 +47,7 @@ class TestPruningEquivalence(unittest.TestCase):
                 continue
 
             baseline = detect_from_multiple_executions(path, NoPruningStrategy())
-            result   = detect_from_multiple_executions(path, AGGRESSIVE_SMALL_WINDOW)
+            result   = detect_from_multiple_executions(path, AggressivePruningStrategy(10))
 
             self.assertLessEqual(
                 result.total_races, baseline.total_races,

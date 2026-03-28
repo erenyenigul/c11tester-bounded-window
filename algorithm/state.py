@@ -213,7 +213,6 @@ class ExecutionState:
             if store_node:
                 # basic rf synchronization: store(release) -> load(acquire)
                 if node.is_acquire() and store_node.is_release():
-                    node.sw_prior.append(store_node.event_id)
                     node.cv.merge(store_node.cv)
                 
                 # fence synchronization: release fence -> atomic store -> atomic load -> acquire fence
@@ -225,7 +224,6 @@ class ExecutionState:
                     last_rel_fence = self.get_last_release_fence(store_node.thread)
                     if last_rel_fence and store_node.cv.get(last_rel_fence.thread) >= last_rel_fence.event_id:
                         # (rel-fence sb-> store) and (store rf-> load(acq)) -> sw edge from rel-fence to load(acq)
-                        node.sw_prior.append(last_rel_fence.event_id)
                         node.cv.merge(last_rel_fence.cv)
                 
                 if node.is_load():
@@ -246,18 +244,15 @@ class ExecutionState:
                          # AND (rel-fence sb-> store) -> rel-fence sw-> acq-fence.
                          last_rel_fence = self.get_last_release_fence(store_node.thread)
                          if last_rel_fence and store_node.cv.get(last_rel_fence.thread) >= last_rel_fence.event_id:
-                             node.sw_prior.append(last_rel_fence.event_id)
                              node.cv.merge(last_rel_fence.cv)
 
                          # (store(rel) rf-> load) and (load sb-> acq-fence) -> store(rel) sw-> acq-fence.
                          if store_node.is_release():
-                             node.sw_prior.append(store_node.event_id)
                              node.cv.merge(store_node.cv)
 
         if node.action == "thread start":
             for n in self.nodes.values():
                 if (n.action == "thread create" or n.action == "pthread create") and n.location == node.location:
-                    node.sw_prior.append(n.event_id)
                     node.cv.merge(n.cv)
 
         # 2. add priorset edges

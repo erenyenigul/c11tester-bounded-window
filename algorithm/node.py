@@ -17,7 +17,6 @@ class Node:
         
         # necessary relations for the race detection algorithm
         self.sb_prior = None        # last event in the same thread (po)
-        self.sw_prior = []          # events that synchronize with this event
         self.cv = ClockVector({thread: event_id})  # happens-before clock vector (includes self)
         self.prior_set_edges = []   # edges added via WritePriorSet/ReadPriorSet
     

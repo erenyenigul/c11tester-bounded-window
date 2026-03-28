@@ -161,7 +161,14 @@ class AggressivePruningStrategy(PruningStrategy):
 
         prunable = set()
 
-        #  find stores outside the window
+        # Built once per prune call; discarded after. Avoids O(N^2) scan in the worklist loop.
+        rf_index = {}
+        for accesses in state.ALocs.values():
+            for n in accesses:
+                if n.is_load() and n.rf is not None:
+                    rf_index.setdefault(n.rf, []).append(n)
+
+        # Seed: stores outside the window.
         worklist = []
         for accesses in state.ALocs.values():
             for n in accesses:
@@ -169,9 +176,9 @@ class AggressivePruningStrategy(PruningStrategy):
                     prunable.add(n.event_id)
                     worklist.append(n)
 
-        # Follow mo-predecessors via write_prior_set / read_prior_set.
+        # Follow mo-predecessors via prior_set_edges.
         # When a store is pruned, loads reading from it are also pruned;
-        # their read_prior_set reveals extra mo-predecessors of that store.
+        # their prior_set_edges reveal extra mo-predecessors of that store.
         while worklist:
             node = worklist.pop()
             for pred_id in node.prior_set_edges:
@@ -181,11 +188,10 @@ class AggressivePruningStrategy(PruningStrategy):
                         prunable.add(pred_id)
                         worklist.append(pred)
             if node.is_store():
-                for accesses in state.ALocs.values():
-                    for n in accesses:
-                        if n.is_load() and n.rf == node.event_id and n.event_id not in prunable:
-                            prunable.add(n.event_id)
-                            worklist.append(n)
+                for load in rf_index.get(node.event_id, []):
+                    if load.event_id not in prunable:
+                        prunable.add(load.event_id)
+                        worklist.append(load)
 
         # Release/SC fences outside the window; acquire fences always.
         for fences in state.release_fences.values():

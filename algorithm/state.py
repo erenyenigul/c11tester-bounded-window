@@ -205,7 +205,6 @@ class ExecutionState:
         # 1. compute hb incrementally
         if len(self.threads_history[node.thread]) > 1:
             prev_sb = self.threads_history[node.thread][-2]
-            node.sb_prior = prev_sb.event_id
             node.cv.merge(prev_sb.cv)
         
         if node.rf is not None:

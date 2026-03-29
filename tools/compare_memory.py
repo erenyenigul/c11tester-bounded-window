@@ -25,10 +25,10 @@ def peak_mb(bin_file):
     with memray.FileReader(bin_file) as reader:
         return reader.metadata.peak_memory / (1024 * 1024)
 
-def run_strategy(strategy, dirs, bin_file):
+def run_strategy(factory, args, dirs, bin_file):
     with memray.Tracker(bin_file):
         for d in dirs:
-            detect_from_multiple_executions(d, strategy)
+            detect_from_multiple_executions(d, factory(args))
     return peak_mb(bin_file)
 
 def has_executions(d):
@@ -70,7 +70,7 @@ def main():
     for name, factory in STRATEGIES.items():
         bin_file = os.path.join(tmpdir, f"{name}.bin")
         print(f"  [{name}] running...", end=" ", flush=True)
-        peak = run_strategy(factory(args), dirs, bin_file)
+        peak = run_strategy(factory, args, dirs, bin_file)
         results[name] = (peak, bin_file)
         print(f"{peak:.3f} MiB")
 

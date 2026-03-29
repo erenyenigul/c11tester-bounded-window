@@ -67,31 +67,33 @@ def main():
     tmpdir = tempfile.mkdtemp(prefix="memray_compare_")
     results = {}
 
-    for name, factory in STRATEGIES.items():
-        bin_file = os.path.join(tmpdir, f"{name}.bin")
-        print(f"  [{name}] running...", end=" ", flush=True)
-        peak = run_strategy(factory, args, dirs, bin_file)
-        results[name] = (peak, bin_file)
-        print(f"{peak:.3f} MiB")
+    try:
+        for name, factory in STRATEGIES.items():
+            bin_file = os.path.join(tmpdir, f"{name}.bin")
+            print(f"  [{name}] running...", end=" ", flush=True)
+            peak = run_strategy(factory, args, dirs, bin_file)
+            results[name] = (peak, bin_file)
+            print(f"{peak:.3f} MiB")
 
-    baseline = results["none"][0]
-    if args.csv:
-        peaks = [f"{results[n][0]:.3f}" for n in STRATEGIES]
-        print(",".join([str(args.window_size)] + peaks))
-    else:
-        print(f"\n{'Strategy':<15} {'Peak (MiB)':>12} {'vs none':>10}")
-        print("-" * 40)
-        for name, (peak, _) in results.items():
-            pct = (peak - baseline) / baseline * 100 if baseline > 0 else 0
-            sign = "+" if pct >= 0 else ""
-            print(f"{name:<15} {peak:>12.3f} {sign}{pct:.1f}%")
+        baseline = results["none"][0]
+        if args.csv:
+            peaks = [f"{results[n][0]:.3f}" for n in STRATEGIES]
+            print(",".join([str(args.window_size)] + peaks))
+        else:
+            print(f"\n{'Strategy':<15} {'Peak (MiB)':>12} {'vs none':>10}")
+            print("-" * 40)
+            for name, (peak, _) in results.items():
+                pct = (peak - baseline) / baseline * 100 if baseline > 0 else 0
+                sign = "+" if pct >= 0 else ""
+                print(f"{name:<15} {peak:>12.3f} {sign}{pct:.1f}%")
 
-    if args.keep_bins:
-        print(f"\nBin files: {tmpdir}/")
-        for name in results:
-            print(f"  memray flamegraph {tmpdir}/{name}.bin")
-    else:
-        shutil.rmtree(tmpdir)
+        if args.keep_bins:
+            print(f"\nBin files: {tmpdir}/")
+            for name in results:
+                print(f"  memray flamegraph {tmpdir}/{name}.bin")
+    finally:
+        if not args.keep_bins:
+            shutil.rmtree(tmpdir, ignore_errors=True)
 
 if __name__ == "__main__":
     main()

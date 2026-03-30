@@ -105,6 +105,20 @@ python3 tools/race_detector.py data/test_cases/test_hb.json
 
 ---
 
+## 4. Pruning Strategies
+
+Three strategies are available via `--pruning-mode` in `tools/race_detector.py`:
+
+- **`none`** — no pruning; keeps the full execution graph. Good for debugging.
+- **`conservative`** — safe pruning based on `CVmin` (component-wise minimum of all threads' clock vectors). Removes stores that no thread can ever read from again. Finds all races.
+- **`aggressive`** — keeps only the most recent `--window-size` events. For each out-of-window store, also removes any stores mo-ordered before it (even if inside the window) to stay sound. May miss some races but bounds memory use even when threads never synchronize.
+
+```shell
+python3 tools/race_detector.py data/test_cases/race01_relaxed_ww/ --pruning-mode aggressive --window-size 500
+```
+
+---
+
 ## Requirements
 *   **Python 3.x**
 *   **Graphviz:** Required for PNG generation.

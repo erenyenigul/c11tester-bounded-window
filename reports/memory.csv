@@ -1,0 +1,25 @@
+date,commit,window_size,none_mib,conservative_mib,aggressive_mib
+2026-03-31 21:40 UTC,3866e7dc8a4e8a9c4dd04e2596373a9bde33483c,Running on 12 test cases (window=50, interval=16)
+
+  [none] running... 45.941 MiB
+  [conservative] running... 31.938 MiB
+  [aggressive] running... 14.181 MiB
+50,45.941,31.938,14.181
+2026-03-31 21:40 UTC,3866e7dc8a4e8a9c4dd04e2596373a9bde33483c,Running on 12 test cases (window=100, interval=16)
+
+  [none] running... 45.941 MiB
+  [conservative] running... 33.938 MiB
+  [aggressive] running... 16.455 MiB
+100,45.941,33.938,16.455
+2026-03-31 21:40 UTC,3866e7dc8a4e8a9c4dd04e2596373a9bde33483c,Running on 12 test cases (window=200, interval=16)
+
+  [none] running... 45.941 MiB
+  [conservative] running... 28.938 MiB
+  [aggressive] running... 19.724 MiB
+200,45.941,28.938,19.724
+2026-03-31 21:40 UTC,3866e7dc8a4e8a9c4dd04e2596373a9bde33483c,Running on 12 test cases (window=400, interval=16)
+
+  [none] running... 45.941 MiB
+  [conservative] running... 28.938 MiB
+  [aggressive] running... 20.847 MiB
+400,45.941,28.938,20.847

@@ -119,6 +119,31 @@ python3 tools/race_detector.py data/test_cases/race01_relaxed_ww/ --pruning-mode
 
 ---
 
+## 5. Memory Comparison
+
+`tools/compare_memory.py` measures peak memory for each pruning strategy using [memray](https://github.com/bloomberg/memray).
+
+```shell
+pip install memray
+```
+
+Run on a single test case or all cases at once:
+
+```shell
+# all test cases
+python tools/compare_memory.py data/test_cases --all-cases --window-size 100
+
+# single directory
+python tools/compare_memory.py data/test_cases/race06_three_thread --window-size 100
+```
+
+Use `--csv` to print a raw data row (`window_size,none,conservative,aggressive`) instead of the formatted table. It is used in the GitHub Action to append results to `reports/memory.csv`.
+
+Results are tracked over time in `reports/memory.csv` via the [Memory Report](.github/workflows/memory-report.yml) GitHub Action, which runs on every push to `main` across window sizes 50, 100, 200, and 400.
+
+---
+
 ## Requirements
 *   **Python 3.x**
 *   **Graphviz:** Required for PNG generation.
+*   **memray:** For memory profiling in `compare_memory.py`.

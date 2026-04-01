@@ -21,7 +21,7 @@ STRATEGIES = {
     "aggressive":   lambda args: AggressivePruningStrategy(args.window_size, prune_interval=args.prune_interval),
 }
 
-CSV_PATH = "memory.csv"
+CSV_PATH = "report.csv"
 
 # Fixed order for consistent output (CSV + terminal)
 ORDER = ["none", "conservative", "aggressive"]

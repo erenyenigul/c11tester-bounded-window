@@ -119,7 +119,7 @@ python3 tools/race_detector.py data/test_cases/race01_relaxed_ww/ --pruning-mode
 
 ---
 
-## 5. Memory Comparison
+## 5. Memory, Recall, Precision, and Runtime Comparison
 
 `tools/compare_memory.py` measures peak memory for each pruning strategy using [memray](https://github.com/bloomberg/memray).
 
@@ -137,9 +137,15 @@ python tools/compare_memory.py data/test_cases --all-cases --window-size 100
 python tools/compare_memory.py data/test_cases/race06_three_thread --window-size 100
 ```
 
-Use `--csv` to print a raw data row (`window_size,none,conservative,aggressive`) instead of the formatted table. It is used in the GitHub Action to append results to `reports/memory.csv`.
+Use `--csv` to store the results in a local `report.csv` file. Without it the results are printed on stdout as a table and are not stored.
 
-Results are tracked over time in `reports/memory.csv` via the [Memory Report](.github/workflows/memory-report.yml) GitHub Action, which runs on every push to `main` across window sizes 50, 100, 200, and 400.
+To fully compile all 100 executions for all test programs and get the metrics for all of these, run:
+
+```shell
+./tools/replicate_metrics_analysis.sh --compile
+```
+
+Omit `--compile` to run tests on the sample 20 executions per test case already provided.
 
 ---
 

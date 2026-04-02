@@ -13,12 +13,14 @@ RUN_DOCKER=false
 RUN_PARSE=false
 RUN_GRAPHS=false
 RUN_DETECT=false
+WHAT_TESTS="bounded"
 
 if [ $# -eq 0 ]; then
     RUN_DOCKER=true
     RUN_PARSE=true
     RUN_GRAPHS=false # it takes a long time to generate graphs for all programs, so we disable it by default
     RUN_DETECT=true
+    WHAT_TESTS="bounded"
 fi
 
 for arg in "$@"; do
@@ -27,9 +29,10 @@ for arg in "$@"; do
         --parse)  RUN_PARSE=true ;;
         --graphs) RUN_GRAPHS=true ;;
         --detect) RUN_DETECT=true ;;
+        --c11tester) WHAT_TESTS="c11tester" ;;
         *)
             echo "Unknown option: $arg"
-            echo "Usage: $0 [--docker] [--parse] [--graphs] [--detect]"
+            echo "Usage: $0 [--docker] [--parse] [--graphs] [--detect] [--c11tester]"
             exit 1
             ;;
     esac
@@ -37,12 +40,14 @@ done
 
 if $RUN_DOCKER; then
     echo "--- Step 1: Running C11Tester via Docker ---"
-    docker run --rm -v "$(pwd):/analysis" pcp:latest bash /analysis/tools/run_c11tester.sh bounded
+    mkdir -p data/raw && rm -rf data/raw/* data/raw/.[!.]* data/raw/..?*
+    docker run --rm -v "$(pwd):/analysis" pcp:latest bash /analysis/tools/run_c11tester.sh $WHAT_TESTS
 fi
 
 if $RUN_PARSE; then
     echo ""
     echo "--- Step 2: Parsing C11Tester traces ---"
+    mkdir -p data/parsed && rm -rf data/parsed/* data/parsed/.[!.]* data/parsed/..?*
     for program_dir in data/raw/*; do
         [ -d "$program_dir" ] || continue
         echo "Parsing: $(basename "$program_dir")"

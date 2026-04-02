@@ -2,7 +2,6 @@
 
 set -e
 export PYTHONPATH=$PYTHONPATH:.
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 RUN_COMPILE=false
 
@@ -20,8 +19,19 @@ done
 
 # Step 1: optionally run compile pipeline
 if $RUN_COMPILE; then
-    echo "--- Step 1: Running compile pipeline (docker + parse) ---"
-    bash "$PROJECT_ROOT/c11_bounded_window.sh" --docker --parse
+    mkdir -p data/raw && rm -rf data/raw/* data/raw/.[!.]* data/raw/..?*
+    mkdir -p data/test_cases && rm -rf data/test_cases/* data/test_cases/.[!.]* data/test_cases/..?*
+    
+    echo "--- Step 1: Running C11Tester via Docker ---"
+    docker run --rm -v "$(pwd):/analysis" pcp:latest bash /analysis/tools/run_c11tester.sh bounded
+    echo ""
+    
+    echo "--- Step 2: Parsing C11Tester traces ---"
+    for program_dir in data/raw/*; do
+        [ -d "$program_dir" ] || continue
+        echo "Parsing: $(basename "$program_dir")"
+        python3 tools/c11_parser.py "$program_dir"/output.txt data/test_cases/$(basename "$program_dir")
+    done
 fi
 
 # Step 2: always run tests

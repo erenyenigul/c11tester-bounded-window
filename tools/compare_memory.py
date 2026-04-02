@@ -130,7 +130,7 @@ def compute_metrics(results):
     return metrics
 
 
-def append_csv(window_size, results, metrics):
+def append_csv(window_size, prune_interval, results, metrics):
     """
     Append a row to CSV containing:
     - memory usage
@@ -145,7 +145,7 @@ def append_csv(window_size, results, metrics):
         # Write header once
         if not file_exists:
             f.write(
-                "window_size,"
+                "window_size,prune_interval,"
                 "none_mib,conservative_mib,aggressive_mib,"
                 "none_sec,conservative_sec,aggressive_sec,"
                 "none_precision,conservative_precision,aggressive_precision,"
@@ -160,7 +160,7 @@ def append_csv(window_size, results, metrics):
 
         # Combine into single CSV row
         row = ",".join(
-            [str(window_size)] + peaks + times + precisions + recalls
+            [str(window_size), str(prune_interval)] + peaks + times + precisions + recalls
         )
         f.write(row + "\n")
 
@@ -169,7 +169,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("path")
     parser.add_argument("--all-cases", action="store_true")
-    parser.add_argument("--window-size", type=int, default=300)
+    parser.add_argument("--window-size", type=int, default=200)
     parser.add_argument("--prune-interval", type=int, default=16)
     parser.add_argument("--keep-bins", action="store_true")
     parser.add_argument("--csv", action="store_true")
@@ -215,7 +215,7 @@ def main():
         metrics = compute_metrics(results)
 
         if args.csv:
-            append_csv(args.window_size, results, metrics)
+            append_csv(args.window_size, args.prune_interval, results, metrics)
             print(f"\nAppended results to {CSV_PATH}")
         else:
             # Pretty terminal output

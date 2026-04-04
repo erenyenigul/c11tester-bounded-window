@@ -15,6 +15,9 @@ class PruningStrategy:
 
     def _do_prune(self, state, prunable_ids):
         """Remove nodes from every state data structure."""
+        if not prunable_ids:
+            return
+
         for eid in prunable_ids:
             state.nodes.pop(eid, None)
 
@@ -23,6 +26,8 @@ class PruningStrategy:
                 n for n in state.threads_history[tid]
                 if n.event_id not in prunable_ids
             ]
+            if not state.threads_history[tid]:
+                del state.threads_history[tid]
 
         for loc in list(state.ALocs):
             state.ALocs[loc] = [
@@ -67,6 +72,8 @@ class ConservativePruningStrategy(PruningStrategy):
     Conservative pruning (Section 6.1). Finds stores that no thread can ever
     read from again using CVmin (component-wise min of all threads' last CVs),
     then removes those stores, any loads that read from them, and stale fences.
+    
+    Soundness fix: Only prune events that strictly happen-before the latest synced store.
     """
 
     def _prune(self, state):
@@ -95,9 +102,9 @@ class ConservativePruningStrategy(PruningStrategy):
         prunable = set()
 
         # Per location: keep only the latest store all threads have seen; prune the rest.
-        for accesses in state.ALocs.values():
+        for loc, accesses in state.ALocs.items():
             stores_at_loc = [n for n in accesses if n.is_store()]
-
+            
             latest_synced = None
             for s in stores_at_loc:
                 if s.event_id <= cvmin.get(s.thread):
@@ -107,17 +114,13 @@ class ConservativePruningStrategy(PruningStrategy):
             if latest_synced is None:
                 continue
 
-            for s in stores_at_loc:
-                if s.event_id < latest_synced.event_id:
-                    prunable.add(s.event_id)
-
-        # Loads reading from pruned stores are now dangling.
-        for accesses in state.ALocs.values():
+            # Prune any access that HBs latest_synced.
+            # Such accesses are guaranteed to HB any future access to this location.
             for n in accesses:
-                if n.is_load() and n.rf in prunable:
+                if n.event_id < latest_synced.event_id and state.hb(n.event_id, latest_synced.event_id):
                     prunable.add(n.event_id)
 
-        # Release/SC fences strictly before CVmin are redundant; acquire fences always are.
+        # Release/SC/Acquire fences strictly before CVmin are redundant.
         for tid, fences in state.release_fences.items():
             for f in fences:
                 if f.event_id < cvmin.get(tid):
@@ -128,9 +131,10 @@ class ConservativePruningStrategy(PruningStrategy):
                 if f.event_id < cvmin.get(tid):
                     prunable.add(f.event_id)
 
-        for fences in state.acquire_fences.values():
+        for tid, fences in state.acquire_fences.items():
             for f in fences:
-                prunable.add(f.event_id)
+                if f.event_id < cvmin.get(tid):
+                    prunable.add(f.event_id)
 
         if not prunable:
             return
@@ -193,7 +197,7 @@ class AggressivePruningStrategy(PruningStrategy):
                         prunable.add(load.event_id)
                         worklist.append(load)
 
-        # Release/SC fences outside the window; acquire fences always.
+        # Fences outside the window; acquire fences outside window too.
         for fences in state.release_fences.values():
             for f in fences:
                 if f.event_id <= cutoff:
@@ -206,7 +210,14 @@ class AggressivePruningStrategy(PruningStrategy):
 
         for fences in state.acquire_fences.values():
             for f in fences:
-                prunable.add(f.event_id)
+                if f.event_id <= cutoff:
+                    prunable.add(f.event_id)
+        
+        # Prune accesses outside the window.
+        for accesses in state.ALocs.values():
+            for n in accesses:
+                if n.event_id <= cutoff:
+                    prunable.add(n.event_id)
 
         if not prunable:
             return

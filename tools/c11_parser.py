@@ -38,6 +38,7 @@ def parse_trace(trace_text, exec_id):
 
     for line in lines:
         line = line.strip()
+        copy_line = line
         
         # Skip all lines until I hit the first event and end parsing when I hit the "HASH" line
         if not line or line.startswith('-') or line.startswith('#'):
@@ -69,18 +70,12 @@ def parse_trace(trace_text, exec_id):
                 line = line[:mo_match.start()] + line[mo_match.end():]
                 line = line.strip()
 
-            # 3. Extract rf (the last number in the line now, if it exists)
+            # 3. Parse event_id and thread_id (always the first two numbers in the line)
             parts = line.split()
-            rf = None
-            if parts and parts[-1].isdigit():
-                rf = int(parts[-1])
-                parts = parts[:-1]
-
-            # 4. Parse event_id and thread_id (always the first two numbers in the line)
             event_id = int(parts[0])
             thread = int(parts[1])
 
-            # 5. Parse action which can be multiple words, so keep consuming parts until we hit a memory order keyword
+            # 4. Parse action which can be multiple words, so keep consuming parts until we hit a memory order keyword
             action_parts = []
             i = 2
             while i < len(parts) and parts[i] not in MO_VALUES:
@@ -94,9 +89,15 @@ def parse_trace(trace_text, exec_id):
                 raise ValueError(f"Unknown memory order: {parts[i]}")
             i += 1
 
-            # 6. Once we hit the memory order, the next two parts are always the location and value
+            # 5. Once we hit the memory order, the next two parts are always the location and value
             location = parts[i]
             value = parts[i + 1]
+            parts = parts[i + 2:]
+
+            # 6. Extract rf (the last number in the line now, if it exists)
+            rf = None
+            if parts and parts[0].isdigit():
+                rf = int(parts[0])
 
             event = {
                 "event_id": event_id,
@@ -113,7 +114,7 @@ def parse_trace(trace_text, exec_id):
             events.append(event)
 
         except Exception as e:
-            print(f"Skipping line due to error: {line}. Reason: {e}")
+            print(f"Skipping line due to error: {copy_line}. Reason: {e}")
             continue
 
     return {

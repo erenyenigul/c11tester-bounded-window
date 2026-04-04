@@ -173,6 +173,11 @@ python3 tools/race_detector.py --pruning-mode aggressive --window-size 200 --pru
 ```
 Feel free to try different window sizes and prune intervals.
 
+3. (Extra) Generate the execution graph images for the various executions.
+```shell
+./c11_bounded_window.sh --graphs
+```
+
 3. Run our test suite:
 ```shell
 ./tests/run_all_tests.sh

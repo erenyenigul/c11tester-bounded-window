@@ -24,6 +24,7 @@ if $RUN_COMPILE; then
     
     echo "--- Step 1: Running C11Tester via Docker ---"
     docker run --rm -v "$(pwd):/analysis" pcp:latest bash /analysis/tools/run_c11tester.sh bounded
+    docker run --rm -v "$(pwd):/analysis" pcp:latest bash /analysis/tools/run_c11tester.sh c11tester
     echo ""
     
     echo "--- Step 2: Parsing C11Tester traces ---"

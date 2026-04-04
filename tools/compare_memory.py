@@ -130,9 +130,12 @@ def compute_metrics(results):
     return metrics
 
 
-def append_csv(window_size, prune_interval, results, metrics):
+def append_csv(program_name, window_size, prune_interval, results, metrics):
     """
     Append a row to CSV containing:
+    - program name
+    - window size
+    - prune interval
     - memory usage
     - runtime
     - precision
@@ -145,7 +148,7 @@ def append_csv(window_size, prune_interval, results, metrics):
         # Write header once
         if not file_exists:
             f.write(
-                "window_size,prune_interval,"
+                "program_name,window_size,prune_interval,"
                 "none_mib,conservative_mib,aggressive_mib,"
                 "none_sec,conservative_sec,aggressive_sec,"
                 "none_precision,conservative_precision,aggressive_precision,"
@@ -160,7 +163,7 @@ def append_csv(window_size, prune_interval, results, metrics):
 
         # Combine into single CSV row
         row = ",".join(
-            [str(window_size), str(prune_interval)] + peaks + times + precisions + recalls
+            [str(program_name), str(window_size), str(prune_interval)] + peaks + times + precisions + recalls
         )
         f.write(row + "\n")
 
@@ -168,7 +171,6 @@ def append_csv(window_size, prune_interval, results, metrics):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("path")
-    parser.add_argument("--all-cases", action="store_true")
     parser.add_argument("--window-size", type=int, default=200)
     parser.add_argument("--prune-interval", type=int, default=16)
     parser.add_argument("--keep-bins", action="store_true")
@@ -181,58 +183,56 @@ def main():
         sys.exit(1)
 
     # Determine which test case directories to run
-    if args.all_cases:
-        dirs = sorted(
-            os.path.join(args.path, d)
-            for d in os.listdir(args.path)
-            if os.path.isdir(os.path.join(args.path, d)) and has_executions(os.path.join(args.path, d))
-        )
-        if not dirs:
-            print(f"No execution subdirectories found under: {args.path}", file=sys.stderr)
-            sys.exit(1)
-    else:
-        if not has_executions(args.path):
-            print(f"No execution_*.json files found in: {args.path}", file=sys.stderr)
-            sys.exit(1)
-        dirs = [args.path]
+    program_dirs = sorted(
+        os.path.join(args.path, d)
+        for d in os.listdir(args.path)
+        if os.path.isdir(os.path.join(args.path, d)) and has_executions(os.path.join(args.path, d))
+    )
+    if not program_dirs:
+        print(f"No test case directories with execution_*.json found in {args.path}", file=sys.stderr)
+        sys.exit(1)
 
     # Temporary directory for memray output
     tmpdir = tempfile.mkdtemp(prefix="memray_compare_")
-    results = {}
 
     try:
-        # Run all strategies
-        for name, factory in STRATEGIES.items():
-            bin_file = os.path.join(tmpdir, f"{name}.bin")
-            print(f"[{name}] running...", end=" ", flush=True)
+        for program_dir in program_dirs:
+            program_name = os.path.basename(program_dir)
+            results = {}
+            print(f"\n=== Analyzing {program_name} ===")
+            
+            # Run all strategies
+            for name, factory in STRATEGIES.items():
+                bin_file = os.path.join(tmpdir, f"{program_name}_{name}_ws{args.window_size}_pi{args.prune_interval}.bin")
+                print(f"[{name}] running...", end=" ", flush=True)
 
-            peak, runtime, summaries = run_strategy(factory, args, dirs, bin_file)
-            results[name] = (peak, runtime, summaries)
+                peak, runtime, summaries = run_strategy(factory, args, [program_dir], bin_file)
+                results[name] = (peak, runtime, summaries)
 
-            print(f"{peak:.3f} MiB, {runtime:.3f}s")
+                print(f"{peak:.3f} MiB, {runtime:.3f}s")
 
-        # Compute accuracy metrics
-        metrics = compute_metrics(results)
+            # Compute accuracy metrics
+            metrics = compute_metrics(results)
 
-        if args.csv:
-            append_csv(args.window_size, args.prune_interval, results, metrics)
-            print(f"\nAppended results to {CSV_PATH}")
-        else:
-            # Pretty terminal output
-            print(f"\n{'Strategy':<15} {'Mem(MiB)':>10} {'Time(s)':>10} {'Prec':>8} {'Recall':>8}")
-            print("-" * 60)
+            if args.csv:
+                append_csv(program_name, args.window_size, args.prune_interval, results, metrics)
+                print(f"\nAppended results to {CSV_PATH}")
+            else:
+                # Pretty terminal output
+                print(f"\n{'Strategy':<15} {'Mem(MiB)':>10} {'Time(s)':>10} {'Prec':>8} {'Recall':>8}")
+                print("-" * 60)
 
-            for name in ORDER:
-                peak, runtime, _ = results[name]
-                precision, recall = metrics[name]
+                for name in ORDER:
+                    peak, runtime, _ = results[name]
+                    precision, recall = metrics[name]
 
-                print(f"{name:<15} {peak:>10.3f} {runtime:>10.3f} {precision:>8.3f} {recall:>8.3f}")
+                    print(f"{name:<15} {peak:>10.3f} {runtime:>10.3f} {precision:>8.3f} {recall:>8.3f}")
 
-        # Optionally keep memray files for analysis
-        if args.keep_bins:
-            print(f"\nBin files: {tmpdir}/")
-            for name in results:
-                print(f"  memray flamegraph {tmpdir}/{name}.bin")
+            # Optionally keep memray files for analysis
+            if args.keep_bins:
+                print(f"\nBin files: {tmpdir}/")
+                for name in results:
+                    print(f"  memray flamegraph {tmpdir}/{name}.bin")
     finally:
         # Clean up temp files unless requested otherwise
         if not args.keep_bins:

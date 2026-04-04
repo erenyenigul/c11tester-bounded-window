@@ -41,7 +41,9 @@ done
 if $RUN_DOCKER; then
     echo "--- Step 1: Running C11Tester via Docker ---"
     mkdir -p data/raw && rm -rf data/raw/* data/raw/.[!.]* data/raw/..?*
-    docker run --rm -v "$(pwd):/analysis" pcp:latest bash /analysis/tools/run_c11tester.sh $WHAT_TESTS
+    # docker run --rm -v "$(pwd):/analysis" pcp:latest bash /analysis/tools/run_c11tester.sh c11tester
+    # docker run --rm -v "$(pwd):/analysis" pcp:latest bash /analysis/tools/run_c11tester.sh bounded
+    docker run --rm -v "$(pwd):/analysis" pcp:latest bash /analysis/tools/run_c11tester.sh cdschecker
 fi
 
 if $RUN_PARSE; then

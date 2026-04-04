@@ -112,10 +112,10 @@ class ConservativePruningStrategy(PruningStrategy):
                     prunable.add(s.event_id)
 
         # Loads reading from pruned stores are now dangling.
-            for accesses in state.ALocs.values():
-                for n in accesses:
-                    if n.is_load() and n.rf in prunable and not n.is_store():
-                        prunable.add(n.event_id)
+        for accesses in state.ALocs.values():
+            for n in accesses:
+                if n.is_load() and n.rf in prunable and not n.is_store():
+                    prunable.add(n.event_id)
 
         # Release/SC fences strictly before CVmin are redundant; acquire fences always are.
         for tid, fences in state.release_fences.items():
@@ -197,17 +197,17 @@ class AggressivePruningStrategy(PruningStrategy):
         # Release/SC fences outside the window; acquire fences always.
         for fences in state.release_fences.values():
             for f in fences:
-                if f.event_id <= cutoff:
+                if f.event_id < cutoff:
                     prunable.add(f.event_id)
 
         for fences in state.sc_fences.values():
             for f in fences:
-                if f.event_id <= cutoff:
+                if f.event_id < cutoff:
                     prunable.add(f.event_id)
 
         for fences in state.acquire_fences.values():
             for f in fences:
-                if f.event_id <= cutoff:
+                if f.event_id < cutoff:
                     prunable.add(f.event_id)
 
         if not prunable:

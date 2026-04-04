@@ -3,3 +3,5 @@ data/raw/
 data/graphs/
 */__pycache__/
 *.pyc
+.venv/
+*.csv

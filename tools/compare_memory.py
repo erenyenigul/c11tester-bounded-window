@@ -1,97 +1,240 @@
 #!/usr/bin/env python3
-# Usage:
-#   python tools/compare_memory.py data/test_cases/race06_three_thread
-#   python tools/compare_memory.py data/test_cases --all-cases [--keep-bins]
 
 import os
 import sys
 import argparse
 import tempfile
+import time
 import shutil
 import memray
 
+# Allow importing from project root
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from algorithm.prune import AggressivePruningStrategy, ConservativePruningStrategy, NoPruningStrategy
 from algorithm.race import detect_from_multiple_executions
 
+# Map strategy names to constructors
 STRATEGIES = {
     "none":         lambda args: NoPruningStrategy(),
     "conservative": lambda args: ConservativePruningStrategy(prune_interval=args.prune_interval),
     "aggressive":   lambda args: AggressivePruningStrategy(args.window_size, prune_interval=args.prune_interval),
 }
 
+CSV_PATH = "report.csv"
+
+# Fixed order for consistent output (CSV + terminal)
+ORDER = ["none", "conservative", "aggressive"]
+
+
 def peak_mb(bin_file):
+    """
+    Read memray output file and return peak memory usage in MiB.
+    """
     with memray.FileReader(bin_file) as reader:
         return reader.metadata.peak_memory / (1024 * 1024)
 
+
+def extract_race_ids(summary):
+    """
+    Convert a ProgramRaceSummary into a set of unique race identifiers.
+
+    Each race is represented as a tuple of (event_id_a, event_id_b),
+    allowing easy comparison between strategies.
+    """
+    ids = set()
+    for races in summary.races.values():
+        for r in races:
+            ids.add((r.a.event_id, r.b.event_id))
+    return ids
+
+
 def run_strategy(factory, args, dirs, bin_file):
+    """
+    Run a single pruning strategy over all test case directories.
+
+    Returns:
+        peak memory (MiB),
+        runtime (seconds),
+        per-test-case summaries
+    """
+    start = time.perf_counter()
+
+    summaries = {}
+
+    # Track memory usage for the entire run
     with memray.Tracker(bin_file):
         for d in dirs:
-            detect_from_multiple_executions(d, factory(args))
-    return peak_mb(bin_file)
+            # Store summary PER TEST CASE (important for accuracy metrics)
+            summaries[d] = detect_from_multiple_executions(d, factory(args))
+
+    runtime = time.perf_counter() - start
+    peak = peak_mb(bin_file)
+
+    return peak, runtime, summaries
+
 
 def has_executions(d):
+    """
+    Check if a directory contains execution_*.json files.
+    """
     return any(f.startswith("execution_") and f.endswith(".json") for f in os.listdir(d))
+
+
+def compute_metrics(results):
+    """
+    Compute macro-averaged precision and recall.
+
+    For each test case:
+        - Compare strategy results against baseline (no pruning)
+        - Compute precision + recall
+
+    Then average across all test cases.
+    """
+    metrics = {}
+
+    # Baseline = ground truth (no pruning)
+    baseline_summaries = results["none"][2]
+
+    for strategy in ORDER:
+        _, _, summaries = results[strategy]
+
+        precisions = []
+        recalls = []
+
+        for case in summaries:
+            # Ground truth races
+            baseline_ids = extract_race_ids(baseline_summaries[case])
+
+            # Races found by this strategy
+            ids = extract_race_ids(summaries[case])
+
+            # True positives = intersection
+            tp = len(ids & baseline_ids)
+
+            # Precision: how many reported races are correct
+            precision = tp / len(ids) if ids else 1.0
+
+            # Recall: how many real races were found
+            recall = tp / len(baseline_ids) if baseline_ids else 1.0
+
+            precisions.append(precision)
+            recalls.append(recall)
+
+        # Macro average across test cases
+        avg_precision = sum(precisions) / len(precisions) if precisions else 1.0
+        avg_recall = sum(recalls) / len(recalls) if recalls else 1.0
+
+        metrics[strategy] = (avg_precision, avg_recall)
+
+    return metrics
+
+
+def append_csv(program_name, window_size, prune_interval, results, metrics):
+    """
+    Append a row to CSV containing:
+    - program name
+    - window size
+    - prune interval
+    - memory usage
+    - runtime
+    - precision
+    - recall
+    for all strategies.
+    """
+    file_exists = os.path.isfile(CSV_PATH)
+
+    with open(CSV_PATH, "a") as f:
+        # Write header once
+        if not file_exists:
+            f.write(
+                "program_name,window_size,prune_interval,"
+                "none_mib,conservative_mib,aggressive_mib,"
+                "none_sec,conservative_sec,aggressive_sec,"
+                "none_precision,conservative_precision,aggressive_precision,"
+                "none_recall,conservative_recall,aggressive_recall\n"
+            )
+
+        # Extract values in fixed order
+        peaks = [f"{results[n][0]:.3f}" for n in ORDER]
+        times = [f"{results[n][1]:.3f}" for n in ORDER]
+        precisions = [f"{metrics[n][0]:.3f}" for n in ORDER]
+        recalls = [f"{metrics[n][1]:.3f}" for n in ORDER]
+
+        # Combine into single CSV row
+        row = ",".join(
+            [str(program_name), str(window_size), str(prune_interval)] + peaks + times + precisions + recalls
+        )
+        f.write(row + "\n")
+
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("path")
-    parser.add_argument("--all-cases", action="store_true")
-    parser.add_argument("--window-size",    type=int, default=300)
+    parser.add_argument("--window-size", type=int, default=200)
     parser.add_argument("--prune-interval", type=int, default=16)
-    parser.add_argument("--keep-bins",      action="store_true")
-    parser.add_argument("--csv",            action="store_true", help="Print results as a CSV row (no header)")
+    parser.add_argument("--keep-bins", action="store_true")
+    parser.add_argument("--csv", action="store_true")
     args = parser.parse_args()
 
+    # Validate input path
     if not os.path.isdir(args.path):
         print(f"Directory not found: {args.path}", file=sys.stderr)
         sys.exit(1)
 
-    if args.all_cases:
-        dirs = sorted(
-            os.path.join(args.path, d) for d in os.listdir(args.path)
-            if os.path.isdir(os.path.join(args.path, d)) and has_executions(os.path.join(args.path, d))
-        )
-        if not dirs:
-            print(f"No execution subdirectories found under: {args.path}", file=sys.stderr)
-            sys.exit(1)
-        print(f"Running on {len(dirs)} test cases (window={args.window_size}, interval={args.prune_interval})\n")
-    else:
-        if not has_executions(args.path):
-            print(f"No execution_*.json files found in: {args.path}", file=sys.stderr)
-            sys.exit(1)
-        dirs = [args.path]
-        print(f"Running on: {args.path} (window={args.window_size}, interval={args.prune_interval})\n")
+    # Determine which test case directories to run
+    program_dirs = sorted(
+        os.path.join(args.path, d)
+        for d in os.listdir(args.path)
+        if os.path.isdir(os.path.join(args.path, d)) and has_executions(os.path.join(args.path, d))
+    )
+    if not program_dirs:
+        print(f"No test case directories with execution_*.json found in {args.path}", file=sys.stderr)
+        sys.exit(1)
 
+    # Temporary directory for memray output
     tmpdir = tempfile.mkdtemp(prefix="memray_compare_")
-    results = {}
 
     try:
-        for name, factory in STRATEGIES.items():
-            bin_file = os.path.join(tmpdir, f"{name}.bin")
-            print(f"  [{name}] running...", end=" ", flush=True)
-            peak = run_strategy(factory, args, dirs, bin_file)
-            results[name] = (peak, bin_file)
-            print(f"{peak:.3f} MiB")
+        for program_dir in program_dirs:
+            program_name = os.path.basename(program_dir)
+            results = {}
+            print(f"\n=== Analyzing {program_name} ===")
+            
+            # Run all strategies
+            for name, factory in STRATEGIES.items():
+                bin_file = os.path.join(tmpdir, f"{program_name}_{name}_ws{args.window_size}_pi{args.prune_interval}.bin")
+                print(f"[{name}] running...", end=" ", flush=True)
 
-        baseline = results["none"][0]
-        if args.csv:
-            peaks = [f"{results[n][0]:.3f}" for n in STRATEGIES]
-            print(",".join([str(args.window_size)] + peaks))
-        else:
-            print(f"\n{'Strategy':<15} {'Peak (MiB)':>12} {'vs none':>10}")
-            print("-" * 40)
-            for name, (peak, _) in results.items():
-                pct = (peak - baseline) / baseline * 100 if baseline > 0 else 0
-                sign = "+" if pct >= 0 else ""
-                print(f"{name:<15} {peak:>12.3f} {sign}{pct:.1f}%")
+                peak, runtime, summaries = run_strategy(factory, args, [program_dir], bin_file)
+                results[name] = (peak, runtime, summaries)
 
-        if args.keep_bins:
-            print(f"\nBin files: {tmpdir}/")
-            for name in results:
-                print(f"  memray flamegraph {tmpdir}/{name}.bin")
+                print(f"{peak:.3f} MiB, {runtime:.3f}s")
+
+            # Compute accuracy metrics
+            metrics = compute_metrics(results)
+
+            if args.csv:
+                append_csv(program_name, args.window_size, args.prune_interval, results, metrics)
+                print(f"\nAppended results to {CSV_PATH}")
+            else:
+                # Pretty terminal output
+                print(f"\n{'Strategy':<15} {'Mem(MiB)':>10} {'Time(s)':>10} {'Prec':>8} {'Recall':>8}")
+                print("-" * 60)
+
+                for name in ORDER:
+                    peak, runtime, _ = results[name]
+                    precision, recall = metrics[name]
+
+                    print(f"{name:<15} {peak:>10.3f} {runtime:>10.3f} {precision:>8.3f} {recall:>8.3f}")
+
+            # Optionally keep memray files for analysis
+            if args.keep_bins:
+                print(f"\nBin files: {tmpdir}/")
+                for name in results:
+                    print(f"  memray flamegraph {tmpdir}/{name}.bin")
     finally:
+        # Clean up temp files unless requested otherwise
         if not args.keep_bins:
             shutil.rmtree(tmpdir, ignore_errors=True)
 

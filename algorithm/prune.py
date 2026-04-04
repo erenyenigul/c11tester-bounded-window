@@ -95,21 +95,32 @@ class ConservativePruningStrategy(PruningStrategy):
         prunable = set()
 
         # Per location: keep only the latest store all threads have seen; prune the rest.
-        for accesses in state.ALocs.values():
+        for loc, accesses in state.ALocs.items():
             stores_at_loc = [n for n in accesses if n.is_store()]
-
-            latest_synced = None
-            for s in stores_at_loc:
-                if s.event_id <= cvmin.get(s.thread):
-                    if latest_synced is None or s.event_id > latest_synced.event_id:
-                        latest_synced = s
-
-            if latest_synced is None:
+            #stores that all threads have seen
+            safe_stores = [s for s in stores_at_loc if s.cv <= cvmin] 
+            if not safe_stores:
                 continue
 
-            for s in stores_at_loc:
-                if s.event_id < latest_synced.event_id:
+            latest_safe = max(safe_stores, key=lambda s: s.event_id)
+
+            for s in safe_stores:
+                if s.event_id != latest_safe.event_id:
                     prunable.add(s.event_id)
+
+            # latest_synced = None
+            # for s in stores_at_loc:
+            #     #if s.event_id <= cvmin.get(s.thread):
+            #     if s.cv <= cvmin:
+            #         if latest_synced is None or s.event_id > latest_synced.event_id:
+            #             latest_synced = s
+
+            # if latest_synced is None:
+            #     continue
+
+            # for s in stores_at_loc:
+            #     if s.event_id < latest_synced.event_id:
+            #         prunable.add(s.event_id)
 
         # Loads reading from pruned stores are now dangling.
         for accesses in state.ALocs.values():
@@ -120,12 +131,12 @@ class ConservativePruningStrategy(PruningStrategy):
         # Release/SC fences strictly before CVmin are redundant; acquire fences always are.
         for tid, fences in state.release_fences.items():
             for f in fences:
-                if f.event_id < cvmin.get(tid):
+                if f.cv <= cvmin:
                     prunable.add(f.event_id)
 
         for tid, fences in state.sc_fences.items():
             for f in fences:
-                if f.event_id < cvmin.get(tid):
+                if f.cv <= cvmin:
                     prunable.add(f.event_id)
 
         for fences in state.acquire_fences.values():

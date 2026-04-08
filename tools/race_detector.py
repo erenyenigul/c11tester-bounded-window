@@ -41,9 +41,6 @@ def main():
     summary = detect_from_multiple_executions(args.execution_dir, make_pruning_strategy(args))
 
     print("-"*50)
-    print(f"Executions analysed : {summary.num_executions}")
-    print(f"Executions with race: {summary.num_executions_with_races}")
-    print(f"Total races found   : {summary.total_races}")
 
     if summary.races:
         print("\nProgram has a data race.")
@@ -53,7 +50,11 @@ def main():
                 print(f"  [{filename}] {race.a} <-> {race.b} at {race.location}")
     else:
         print(f"\nNo data races detected across all {summary.num_executions} executions.")
-
+    
+    print("\n" + "="*50)
+    print(f"\nExecutions analysed : {summary.num_executions}")
+    print(f"Executions with race: {summary.num_executions_with_races}")
+    print(f"Total races found   : {summary.total_races}")
     print("\n" + "="*50)
 
 if __name__ == "__main__":

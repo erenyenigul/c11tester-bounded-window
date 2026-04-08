@@ -81,7 +81,7 @@ cdschecker)
 
     echo "Running CDSChecker benchmarks..."
 
-    BENCHES=("barrier" "chase-lev-deque" "dekker-fences" "linuxrwlocks" "mcs-lock" "mpmc-queue" "ms-queue")
+    BENCHES=("barrier" "chase-lev-deque" "dekker-fences" "linuxrwlocks" "mcs-lock" "spsc-queue" "mpmc-queue" "ms-queue")
 
     for bench in "${BENCHES[@]}"; do
         echo "Running $bench..."

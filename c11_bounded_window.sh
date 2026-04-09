@@ -29,10 +29,9 @@ for arg in "$@"; do
         --parse)  RUN_PARSE=true ;;
         --graphs) RUN_GRAPHS=true ;;
         --detect) RUN_DETECT=true ;;
-        --c11tester) WHAT_TESTS="c11tester" ;;
         *)
             echo "Unknown option: $arg"
-            echo "Usage: $0 [--docker] [--parse] [--graphs] [--detect] [--c11tester]"
+            echo "Usage: $0 [--docker] [--parse] [--graphs] [--detect]"
             exit 1
             ;;
     esac

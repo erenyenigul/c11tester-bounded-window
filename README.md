@@ -137,7 +137,7 @@ Run on a single test case or all cases at once:
 
 ```shell
 # all test cases
-python tools/compare_memory.py data/test_cases --window-size 100
+python3 tools/compare_memory.py data/test_cases --window-size 100
 ```
 
 Use `--csv` to store the results in a local `report.csv` file. Without it the results are printed on stdout as a table and are not stored.
@@ -163,7 +163,7 @@ export PYTHONPATH=$PYTHONPATH:.
 
 2. Choose a specific parsed program folder from `data/parsed` or `data/test_cases` and run it with the aggresive pruning strategy:
 ```shell
-python tools/race_detector.py --pruning-mode aggressive --window-size 200 --prune-interval 16 "data/parsed/{program_name}"
+python3 tools/race_detector.py --pruning-mode aggressive --window-size 200 --prune-interval 16 "data/parsed/{program_name}"
 ```
 Feel free to try different window sizes and prune intervals.
 

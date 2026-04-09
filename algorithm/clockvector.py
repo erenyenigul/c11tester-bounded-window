@@ -3,7 +3,7 @@ class ClockVector:
     Clock vector mapping thread_id -> max epoch (event_id) seen from that thread.
 
     Defined as in Section 4.2 / 5.1 of the C11Tester paper:
-        CV_A           = λt. s_A if t == t_A else 0
+        empty CV_A           = λt. s_A if t == t_A else 0
         CV1 union CV2  = λt. max(CV1(t), CV2(t))   -- merge (in-place)
         CV1 intersect CV2  = λt. min(CV1(t), CV2(t))   -- intersect (new CV)
         CV1 <= CV2  = forall t. CV1(t) <= CV2(t)

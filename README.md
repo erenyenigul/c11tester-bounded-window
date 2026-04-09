@@ -172,13 +172,13 @@ Feel free to try different window sizes and prune intervals.
 ./c11_bounded_window.sh --graphs
 ```
 
-3. Run our test suite:
+4. Run our test suite:
 ```shell
 ./tests/run_all_tests.sh
 ```
 Use `--compile` if you have previously compiled the C11Tester programs instead of our custom ones.
 
-4. Recreate our metrics analysis via:
+5. Recreate our metrics analysis via:
 ```shell
 ./tools/replicate_metrics_analysis.sh
 ```

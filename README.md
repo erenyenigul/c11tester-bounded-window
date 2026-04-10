@@ -74,13 +74,11 @@ Step 1 requires the C11Tester environment, provided via a Docker container.
 *   Built Docker image tagged as `pcp:latest`.
 
 ### Running Manually
-If you wish to run only the C11Tester tool manually, pick your test suite (`bounded` for our custom tests, or `c11tester` for the original C11Tester suite) and run:
+If you wish to run only the C11Tester tool manually, pick your test suite (`bounded` for our custom tests, or `c11tester` for the original C11Tester suite, or `cdschecker` for the CDSChecker suite) and run:
 ```shell
-docker run --rm -v "$(pwd):/analysis" pcp:latest bash /analysis/tools/run_c11tester.sh {bounded, c11tester}
+docker run --rm -v "$(pwd):/analysis" pcp:latest bash /analysis/tools/run_c11tester.sh {bounded, c11tester, cdschecker}
 ```
 This script compiles target programs, runs them with `-verbose=2`, and writes raw output to `data/raw/`.
-
-Use `bounded` to analyse our custom programs and `c11tester` to run `c11tester-tests/test` programs.
 
 ---
 
@@ -139,10 +137,7 @@ Run on a single test case or all cases at once:
 
 ```shell
 # all test cases
-python tools/compare_memory.py data/test_cases --all-cases --window-size 100
-
-# single directory
-python tools/compare_memory.py data/test_cases/race06_three_thread --window-size 100
+python3 tools/compare_memory.py data/test_cases --window-size 100
 ```
 
 Use `--csv` to store the results in a local `report.csv` file. Without it the results are printed on stdout as a table and are not stored.
@@ -165,7 +160,6 @@ Omit `--compile` to run tests on the sample 20 executions per test case already 
 export PYTHONPATH=$PYTHONPATH:.
 ./c11_bounded_window.sh
 ```
-Can also use `--c11tester` if you prefer to run C11Tester's tester programs intead of ours.
 
 2. Choose a specific parsed program folder from `data/parsed` or `data/test_cases` and run it with the aggresive pruning strategy:
 ```shell
@@ -178,13 +172,13 @@ Feel free to try different window sizes and prune intervals.
 ./c11_bounded_window.sh --graphs
 ```
 
-3. Run our test suite:
+4. Run our test suite:
 ```shell
 ./tests/run_all_tests.sh
 ```
 Use `--compile` if you have previously compiled the C11Tester programs instead of our custom ones.
 
-4. Recreate our metrics analysis via:
+5. Recreate our metrics analysis via:
 ```shell
 ./tools/replicate_metrics_analysis.sh
 ```

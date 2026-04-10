@@ -18,6 +18,10 @@ class ProgramRaceSummary:
     races: dict[str, list[DataRace]]
 
 def detect_from_single_execution(filepath: str, pruning_strategy) -> SingleExecutionResult:
+    """
+    Takes a single execution JSON file and returns the detected races
+    """
+    
     with open(filepath, "r") as f:
         data = json.load(f)
 
@@ -41,6 +45,10 @@ def detect_from_single_execution(filepath: str, pruning_strategy) -> SingleExecu
     return SingleExecutionResult(races=state.races, state=state)
 
 def detect_from_multiple_executions(execution_dir, pruning_strategy) -> ProgramRaceSummary:
+    """
+    Takes a directory containing execution_*.json files and returns a summary of detections
+    """
+
     execution_files = sorted(
         f for f in os.listdir(execution_dir)
         if f.startswith("execution_") and f.endswith(".json") and not f.endswith("_graph.json")
